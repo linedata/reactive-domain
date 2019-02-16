@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
@@ -19,7 +22,9 @@ namespace ReactiveDomain.Foundation {
                 {
                     new SourceId.SourceIdGuidConverter(),
                     new CorrelationId.CorrelationIdGuidConverter()
-                }
+                },
+                ContractResolver = new FieldBasedResolver()
+                
             };
         }
         public EventData Serialize(object @event, IDictionary<string, object> headers = null) {
@@ -54,6 +59,28 @@ namespace ReactiveDomain.Foundation {
                                 SerializerSettings);
         }
 
-
+        private class FieldBasedResolver : DefaultContractResolver
+        {
+            protected override IList<JsonProperty> CreateConstructorParameters(ConstructorInfo constructor, JsonPropertyCollection memberProperties)
+            {
+                return base.CreateConstructorParameters(constructor, memberProperties);
+            }
+            protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization) {
+                if (type.IsSubclassOf(typeof(Message)) || type == typeof(Message)) {
+                    return base.CreateProperties(type, MemberSerialization.Fields);
+                }
+                return base.CreateProperties(type, memberSerialization);
+            }
+            protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
+            {
+                var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                .Select(p => base.CreateProperty(p, memberSerialization))
+                            .Union(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                                       .Select(f => base.CreateProperty(f, memberSerialization)))
+                            .ToList();
+                props.ForEach(p => { p.Writable = true; p.Readable = true; });
+                return props;
+            }
+        }
     }
 }
