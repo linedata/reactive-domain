@@ -39,7 +39,7 @@ namespace ReactiveDomain.Messaging {
         /// </summary>
         /// <param name="source">The source command, the cancellation token will be propagated.</param>
         public Command(Command source) : this(source, source.CancellationToken) { }
-        public Command(CorrelatedMessage source, CancellationToken? token = null) : this(source.CorrelationId, new SourceId(source), token) { }
+        public Command(CorrelatedMessage source, CancellationToken? token = null) : this(new CorrelationId(source), new SourceId(source), token) { }
 
         [JsonConstructor]
         public Command(CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId) {
@@ -91,7 +91,7 @@ namespace ReactiveDomain.Messaging {
         /// Constructor
         /// </summary>
         /// <param name="sourceCommand">The Command whose receipt is being acknowledged.</param>
-        public AckCommand(Command sourceCommand) : base(sourceCommand.CorrelationId, new SourceId(sourceCommand)) {
+        public AckCommand(Command sourceCommand) : base(new CorrelationId(sourceCommand), new SourceId(sourceCommand)) {
             SourceCommand = sourceCommand;
         }
 

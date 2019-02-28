@@ -9,7 +9,7 @@ namespace ReactiveDomain.Messaging
         public Type CommandType => SourceCommand.GetType();
         public Guid CommandId => SourceCommand.MsgId;
 
-        protected CommandResponse(Command sourceCommand):base(sourceCommand.CorrelationId, new SourceId(sourceCommand))   
+        protected CommandResponse(Command sourceCommand):base(new CorrelationId(sourceCommand), new SourceId(sourceCommand))   
         {
             SourceCommand = sourceCommand;
         }
