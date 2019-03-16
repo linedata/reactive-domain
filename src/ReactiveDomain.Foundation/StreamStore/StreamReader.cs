@@ -134,7 +134,7 @@ namespace ReactiveDomain.Foundation
         public bool ValidateStreamName(string streamName)
         {
             var currentSlice = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
-            return (currentSlice is StreamNotFoundSlice) || (currentSlice is StreamDeletedSlice);
+            return !(currentSlice is StreamNotFoundSlice) && !(currentSlice is StreamDeletedSlice);
         }
         protected virtual void EventRead(RecordedEvent recordedEvent)
         {
