@@ -77,7 +77,7 @@ namespace ReactiveDomain.Foundation
         public void Read<TAggregate>(
                         long? checkpoint = null,
             bool readBackwards = false) where TAggregate : class, IEventSource
-        {           
+        {
             Read(
                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
                checkpoint,
@@ -120,20 +120,21 @@ namespace ReactiveDomain.Foundation
                 throw new ArgumentException("Stream not found.", streamName);
 
             StreamName = streamName;
-            var slice = _streamStoreConnection.ReadStreamForward(streamName, 0, 500);
-            while (slice != null && !slice.IsEndOfStream)
+            long sliceStart = 0;
+            StreamEventsSlice currentSlice;
+            do
             {
-                foreach (RecordedEvent evt in slice.Events)
-                {
-                    EventRead(evt);
-                }
-                slice = _streamStoreConnection.ReadStreamForward(streamName, 0, 500);
-            }
+                currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, 500);
+
+                sliceStart = currentSlice.NextEventNumber;
+                Array.ForEach(currentSlice.Events, EventRead);
+
+            } while (!currentSlice.IsEndOfStream);
         }
         public bool ValidateStreamName(string streamName)
         {
-            var isValid = _streamStoreConnection.ReadStreamForward(streamName, 0, 1) != null;
-            return isValid;
+            var currentSlice = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
+            return (currentSlice is StreamNotFoundSlice) || (currentSlice is StreamDeletedSlice);
         }
         protected virtual void EventRead(RecordedEvent recordedEvent)
         {
