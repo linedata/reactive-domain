@@ -120,7 +120,7 @@ namespace ReactiveDomain.Foundation
                 throw new ArgumentException("Stream not found.", streamName);
 
             StreamName = streamName;
-            long sliceStart = 0;
+            long sliceStart = checkpoint ?? 0;
             StreamEventsSlice currentSlice;
             do
             {
