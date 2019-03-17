@@ -24,6 +24,7 @@ namespace ReactiveDomain.Foundation
         protected long StreamPosition;
         public long Position => StreamPosition;
         public string StreamName { get; private set; }
+        private const int ReadPageSize = 500;
 
         /// <summary>
         /// Create a stream Reader
@@ -115,19 +116,29 @@ namespace ReactiveDomain.Foundation
                             long? checkpoint = null,
                             bool readBackwards = false)
         {
-            if (readBackwards) { throw new NotImplementedException("Cannot read backwards"); }
+            //if (readBackwards) { throw new NotImplementedException("Cannot read backwards"); }
             if (!ValidateStreamName(streamName))
                 throw new ArgumentException("Stream not found.", streamName);
 
             StreamName = streamName;
-            long sliceStart = checkpoint ?? 0;
+            long sliceStart = checkpoint ?? (readBackwards ? -1 : 0);
             StreamEventsSlice currentSlice;
             do
             {
-                currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, 500);
+                if (!readBackwards)
+                {
+                    currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, ReadPageSize);
+                    sliceStart = currentSlice.NextEventNumber;
+                    Array.ForEach(currentSlice.Events, EventRead);
+                }
+                else
+                {
+                    currentSlice = _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, ReadPageSize);
+                    sliceStart = currentSlice.NextEventNumber;
+                    Array.ForEach(currentSlice.Events, EventRead);
+                }
 
-                sliceStart = currentSlice.NextEventNumber;
-                Array.ForEach(currentSlice.Events, EventRead);
+
 
             } while (!currentSlice.IsEndOfStream);
         }

@@ -153,9 +153,57 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
+        [Fact]
+        public void can_read_stream_backward()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+
+                reader.EventStream.Subscribe<Event>(this);
+
+                reader.Read(_streamName, readBackwards: true);
+
+                Assert.Equal(NUM_OF_EVENTS, _count);
+            }
+        }
+
+        [Fact]
+        public void can_read_stream_backward_from_position()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+
+                var position = NUM_OF_EVENTS / 2;
+
+                reader.EventStream.Subscribe<Event>(this);
+
+                reader.Read(_streamName, position, readBackwards: true);
+
+                Assert.Equal(position + 1, _count); // events from positions: N, N-1...0 => N+1 events
+            }
+        }
+
+        [Fact(Skip = "wip, not implemented yet")]
+        public void can_read_stream_backward_multiple_slices()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+
+                reader.EventStream.Subscribe<Event>(this);
+
+                reader.Read(_streamName, readBackwards: true);
+
+                Assert.Equal(NUM_OF_EVENTS, _count);
+            }
+        }
+
+
         public void Handle(Event message)
         {
-            Thread.Sleep(new Random().Next(300)); // random event handling time
+            //Thread.Sleep(new Random().Next(300)); // random event handling time
             Interlocked.Increment(ref _count);
         }
 

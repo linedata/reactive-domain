@@ -169,7 +169,7 @@ namespace ReactiveDomain.Testing.EventStore {
                                     long start,
                                     long count,
                                     UserCredentials credentials = null) {
-            if (start < 0) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve.");
+            if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve or -1 for reading from the end of the stream.");
             List<RecordedEvent> stream;
             lock (_store) {
                 if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }
@@ -184,7 +184,7 @@ namespace ReactiveDomain.Testing.EventStore {
                                     List<RecordedEvent> stream,
                                     ReadDirection direction) {
             var result = new List<RecordedEvent>();
-            var next = (int)start;
+            var next = start == -1 ? stream.Count - 1 : (int)start;
             for (int i = 0; i < count; i++) {
                 if (next < stream.Count && next >= 0) {
                     long current = next;
