@@ -125,20 +125,12 @@ namespace ReactiveDomain.Foundation
             StreamEventsSlice currentSlice;
             do
             {
-                if (!readBackwards)
-                {
-                    currentSlice = _streamStoreConnection.ReadStreamForward(streamName, sliceStart, ReadPageSize);
+                currentSlice = !readBackwards ? 
+                    _streamStoreConnection.ReadStreamForward(streamName, sliceStart, ReadPageSize) : 
+                    _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, ReadPageSize);
+
                     sliceStart = currentSlice.NextEventNumber;
                     Array.ForEach(currentSlice.Events, EventRead);
-                }
-                else
-                {
-                    currentSlice = _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, ReadPageSize);
-                    sliceStart = currentSlice.NextEventNumber;
-                    Array.ForEach(currentSlice.Events, EventRead);
-                }
-
-
 
             } while (!currentSlice.IsEndOfStream);
         }

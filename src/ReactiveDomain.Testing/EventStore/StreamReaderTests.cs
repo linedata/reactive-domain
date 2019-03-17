@@ -19,6 +19,7 @@ namespace ReactiveDomain.Testing.EventStore
         private long _count;
         private readonly int NUM_OF_EVENTS = 10;
         private ITestOutputHelper _toh;
+        private Action<Event> _gotEvent;
 
         public StreamReaderTests(ITestOutputHelper toh, StreamStoreConnectionFixture fixture)
         {
@@ -185,18 +186,33 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
-        [Fact(Skip = "wip, not implemented yet")]
+        // [Fact(Skip = "wip, not implemented yet")]
+        [Fact]
         public void can_read_stream_backward_multiple_slices()
         {
             foreach (var conn in _stores)
             {
+                int TotalEvents = 10010;
+                var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+                AppendEventArray(TotalEvents, conn, longStreamName);
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
 
                 reader.EventStream.Subscribe<Event>(this);
 
-                reader.Read(_streamName, readBackwards: true);
+                var events = new List<ReadTestEvent>(TotalEvents);
+                _gotEvent = evt =>
+                {
+                    events.Add(evt as ReadTestEvent);
+                };
+                reader.Read(longStreamName, readBackwards: true);
 
-                Assert.Equal(NUM_OF_EVENTS, _count);
+                Assert.Equal(TotalEvents, _count);
+                var expectedNum = TotalEvents - 1;
+                foreach (var evt in events)
+                {
+                    Assert.Equal(expectedNum, evt.MessageNumber);
+                    expectedNum--;
+                }
             }
         }
 
@@ -204,6 +220,7 @@ namespace ReactiveDomain.Testing.EventStore
         public void Handle(Event message)
         {
             //Thread.Sleep(new Random().Next(300)); // random event handling time
+            _gotEvent?.Invoke(message);
             Interlocked.Increment(ref _count);
         }
 
