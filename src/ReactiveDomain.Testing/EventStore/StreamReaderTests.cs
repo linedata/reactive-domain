@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 
+// ReSharper disable UnusedParameter.Local
+
 namespace ReactiveDomain.Testing.EventStore
 {
     public class StreamReaderTests : IClassFixture<StreamStoreConnectionFixture>, Messaging.Bus.IHandle<Event>
@@ -18,7 +20,7 @@ namespace ReactiveDomain.Testing.EventStore
         private readonly IStreamNameBuilder _streamNameBuilder;
         private long _count;
         private readonly int NUM_OF_EVENTS = 10;
-        private ITestOutputHelper _toh;
+        private readonly ITestOutputHelper _toh;
         private Action<Event> _gotEvent;
 
         public StreamReaderTests(ITestOutputHelper toh, StreamStoreConnectionFixture fixture)
@@ -37,13 +39,13 @@ namespace ReactiveDomain.Testing.EventStore
             foreach (var store in _stores)
             {
                 AppendEvents(NUM_OF_EVENTS, store, _streamName);
-
             }
         }
 
         private void AppendEvents(int numEventsToBeSent, IStreamStoreConnection conn, string streamName)
         {
-            _toh.WriteLine($"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
+            _toh.WriteLine(
+                $"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
 
             for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++)
             {
@@ -54,7 +56,8 @@ namespace ReactiveDomain.Testing.EventStore
 
         private void AppendEventArray(int numEventsToBeSent, IStreamStoreConnection conn, string streamName)
         {
-            _toh.WriteLine($"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
+            _toh.WriteLine(
+                $"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
 
             var events = new Event[numEventsToBeSent];
             for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++)
@@ -62,7 +65,8 @@ namespace ReactiveDomain.Testing.EventStore
                 events[evtNumber] = new ReadTestEvent(evtNumber);
             }
 
-            conn.AppendToStream(streamName, ExpectedVersion.Any, null, events.Select(x => _serializer.Serialize(x)).ToArray());
+            conn.AppendToStream(streamName, ExpectedVersion.Any, null,
+                events.Select(x => _serializer.Serialize(x)).ToArray());
         }
 
         [Fact]
@@ -113,7 +117,6 @@ namespace ReactiveDomain.Testing.EventStore
         }
 
 
-
         [Fact]
         public void cannot_read_non_existing_stream()
         {
@@ -123,10 +126,7 @@ namespace ReactiveDomain.Testing.EventStore
 
                 reader.EventStream.Subscribe<Event>(this);
 
-                Assert.Throws<ArgumentException>(() =>
-                {
-                    reader.Read("missing_stream");
-                });
+                Assert.Throws<ArgumentException>(() => { reader.Read("missing_stream"); });
             }
         }
 
@@ -142,15 +142,14 @@ namespace ReactiveDomain.Testing.EventStore
                 Parallel.Invoke(
                     () =>
                     {
-                        for (int chunkNum = 0; chunkNum < 10; chunkNum++) 
+                        for (int chunkNum = 0; chunkNum < 10; chunkNum++)
                             AppendEventArray(NUM_OF_EVENTS, conn, _streamName);
                     },
                     () => reader.Read(_streamName)
-                    );
+                );
 
                 _toh.WriteLine($"Read events: {_count}");
                 Assert.Equal(0, _count % NUM_OF_EVENTS);
-                
             }
         }
 
@@ -200,10 +199,7 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.EventStream.Subscribe<Event>(this);
 
                 var events = new List<ReadTestEvent>(TotalEvents);
-                _gotEvent = evt =>
-                {
-                    events.Add(evt as ReadTestEvent);
-                };
+                _gotEvent = evt => { events.Add(evt as ReadTestEvent); };
                 reader.Read(longStreamName, readBackwards: true);
 
                 Assert.Equal(TotalEvents, _count);
@@ -227,6 +223,7 @@ namespace ReactiveDomain.Testing.EventStore
         public class ReadTestEvent : Event
         {
             public readonly int MessageNumber;
+
             public ReadTestEvent(
                 int messageNumber
             ) : base(NewRoot())

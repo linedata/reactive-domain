@@ -47,16 +47,19 @@ namespace ReactiveDomain.Foundation
             Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             Bus = new InMemoryBus(busName ?? $"{ReaderName} {nameof(EventStream)}");
         }
+
         /// <summary>
         /// By Event Type Projection Reader
         /// i.e. $et-[MessageType]
         /// </summary>
-        /// <param name="tMessage"></param>
-        /// <param name="checkpoint"></param>
-        /// <param name="readBackwards"></param>
+        /// <param name="tMessage">The message type used to generate the stream (projection) name</param>
+        /// <param name="checkpoint">The starting point to read from.</param>
+        /// <param name="count">The count of items to read</param>
+        /// <param name="readBackwards">Read the stream backwards</param>
         public void Read(
             Type tMessage,
             long? checkpoint = null,
+            long? count = null,
             bool readBackwards = false)
         {
             if (!tMessage.IsSubclassOf(typeof(Event)))
@@ -66,22 +69,27 @@ namespace ReactiveDomain.Foundation
             Read(
                 _streamNameBuilder.GenerateForEventType(tMessage.Name),
                checkpoint,
+               count,
                readBackwards);
         }
+
         /// <summary>
         /// By Category Projection Stream Reader
         /// i.e. $ce-[AggregateType]
         /// </summary>
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
-        /// <param name="checkpoint"></param>
-        /// <param name="readBackwards"></param>
+        /// <param name="checkpoint">The starting point to read from.</param>
+        /// <param name="count">The count of items to read</param>
+        /// <param name="readBackwards">Read the stream backwards</param>
         public void Read<TAggregate>(
                         long? checkpoint = null,
-            bool readBackwards = false) where TAggregate : class, IEventSource
+                        long? count = null,
+                        bool readBackwards = false) where TAggregate : class, IEventSource
         {
             Read(
                _streamNameBuilder.GenerateForCategory(typeof(TAggregate)),
                checkpoint,
+               count,
                readBackwards);
         }
 
@@ -90,17 +98,20 @@ namespace ReactiveDomain.Foundation
         /// i.e. [AggregateType]-[id]
         /// </summary>
         /// <typeparam name="TAggregate">The Aggregate type used to generate the stream name</typeparam>
-        /// <param name="id"></param>
-        /// <param name="checkpoint"></param>
-        /// <param name="readBackwards"></param>
+        /// <param name="id">Aggregate id to generate stream name.</param>
+        /// <param name="checkpoint">The starting point to read from.</param>
+        /// <param name="count">The count of items to read</param>
+        /// <param name="readBackwards">Read the stream backwards</param>
         public void Read<TAggregate>(
                         Guid id,
                         long? checkpoint = null,
+                        long? count = null,
                         bool readBackwards = false) where TAggregate : class, IEventSource
         {
             Read(
                 _streamNameBuilder.GenerateForAggregate(typeof(TAggregate), id),
                 checkpoint,
+                count,
                 readBackwards);
         }
 
@@ -108,15 +119,16 @@ namespace ReactiveDomain.Foundation
         /// Named Stream Reader
         /// i.e. [StreamName]
         /// </summary>
-        /// <param name="streamName"></param>
-        /// <param name="checkpoint"></param>
-        /// <param name="readBackwards"></param>
+        /// <param name="streamName">An exact stream name.</param>
+        /// <param name="checkpoint">The starting point to read from.</param>
+        /// <param name="count">The count of items to read</param>
+        /// <param name="readBackwards">Read the stream backwards</param>
         public virtual void Read(
                             string streamName,
                             long? checkpoint = null,
+                            long? count = null,
                             bool readBackwards = false)
         {
-            //if (readBackwards) { throw new NotImplementedException("Cannot read backwards"); }
             if (!ValidateStreamName(streamName))
                 throw new ArgumentException("Stream not found.", streamName);
 
