@@ -234,7 +234,7 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(longStreamName);
 
                 _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
-                Assert.InRange(_count, 100, 150);
+                Assert.Equal(101, _count); // counter increased after cancellation  - expected 101
 
                 // reset
                 _count = 0;
@@ -243,7 +243,7 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(longStreamName, readBackwards: true);
 
                 _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
-                Assert.InRange(_count, 100, 150);
+                Assert.Equal(101, _count);
 
             }
         }

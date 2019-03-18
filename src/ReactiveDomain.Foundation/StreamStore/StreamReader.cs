@@ -166,8 +166,7 @@ namespace ReactiveDomain.Foundation
                 Bus.Publish(@event);
             }
         }
-
-
+        
         public void Cancel()
         {
             _cancelled = true;
