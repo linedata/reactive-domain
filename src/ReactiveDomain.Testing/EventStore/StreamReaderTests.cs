@@ -30,7 +30,7 @@ namespace ReactiveDomain.Testing.EventStore
             var mockStreamStore = new MockStreamStoreConnection("Test-" + Guid.NewGuid());
             mockStreamStore.Connect();
 
-            //_stores.Add(mockStreamStore);
+            _stores.Add(mockStreamStore);
             _stores.Add(fixture.Connection);
 
             _streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
@@ -89,10 +89,9 @@ namespace ReactiveDomain.Testing.EventStore
         {
             foreach (var conn in _stores)
             {
+                _count = 0;
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
-
                 var position = NUM_OF_EVENTS / 2;
-
                 reader.EventStream.Subscribe<Event>(this);
 
                 reader.Read(_streamName, position);
@@ -324,8 +323,7 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(categoryStream, count: 2);
                 Assert.Equal(2, _count);
                 Assert.Equal(1, reader.Position);
-
-
+                
                 // forward 2 from 12
                 _count = 0;
                 reader.Read(categoryStream, checkpoint: 12, count: 2);
