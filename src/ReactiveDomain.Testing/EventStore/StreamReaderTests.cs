@@ -212,6 +212,42 @@ namespace ReactiveDomain.Testing.EventStore
             }
         }
 
+        [Fact]
+        public void can_cancel_long_read()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+
+                const int ManyEvents = 1000;
+
+                reader.EventStream.Subscribe<Event>(this);
+                _gotEvent = e =>
+                {
+                    if (_count == 100) reader.Cancel();
+                    Thread.Sleep(10);
+                };
+
+                // forward
+                AppendEventArray(ManyEvents, conn, longStreamName);
+                reader.Read(longStreamName);
+
+                _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
+                Assert.InRange(_count, 100, 150);
+
+                // reset
+                _count = 0;
+                // backward
+                AppendEventArray(ManyEvents, conn, longStreamName);
+                reader.Read(longStreamName, readBackwards: true);
+
+                _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
+                Assert.InRange(_count, 100, 150);
+
+            }
+        }
+
 
         public void Handle(Event message)
         {

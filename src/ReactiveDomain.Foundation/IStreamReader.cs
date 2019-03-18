@@ -47,5 +47,13 @@ namespace ReactiveDomain.Foundation
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">read the stream backwards</param>
         void Read<TAggregate>(long? checkpoint = null, long? count = null, bool readBackwards = false) where TAggregate : class, IEventSource;
+
+
+        /// <summary>
+        /// Interrupts the reading process. Doesn't guarantee the moment when reading is stopped. For optimization purpose.
+        /// For use in read models when it needs only certain number of events matching some criteria.
+        /// I.e. if model reads stream backward and needs only the last event of particular type in the stream. 
+        /// </summary>
+        void Cancel();
     }
 }

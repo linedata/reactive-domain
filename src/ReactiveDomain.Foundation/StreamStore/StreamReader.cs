@@ -26,6 +26,8 @@ namespace ReactiveDomain.Foundation
         public string StreamName { get; private set; }
         private const int ReadPageSize = 500;
 
+        private bool _cancelled;
+
         /// <summary>
         /// Create a stream Reader
         /// </summary>
@@ -93,6 +95,7 @@ namespace ReactiveDomain.Foundation
                readBackwards);
         }
 
+
         /// <summary>
         /// Aggregate-[id] Stream Reader
         /// i.e. [AggregateType]-[id]
@@ -132,6 +135,7 @@ namespace ReactiveDomain.Foundation
             if (!ValidateStreamName(streamName))
                 throw new ArgumentException("Stream not found.", streamName);
 
+            _cancelled = false;
             StreamName = streamName;
             long sliceStart = checkpoint ?? (readBackwards ? -1 : 0);
             StreamEventsSlice currentSlice;
@@ -144,7 +148,7 @@ namespace ReactiveDomain.Foundation
                     sliceStart = currentSlice.NextEventNumber;
                     Array.ForEach(currentSlice.Events, EventRead);
 
-            } while (!currentSlice.IsEndOfStream);
+            } while (!currentSlice.IsEndOfStream && !_cancelled);
         }
         public bool ValidateStreamName(string streamName)
         {
@@ -153,12 +157,22 @@ namespace ReactiveDomain.Foundation
         }
         protected virtual void EventRead(RecordedEvent recordedEvent)
         {
+            // do not publish or increase counters if cancelled
+            if (_cancelled) return;
+
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
             if (Serializer.Deserialize(recordedEvent) is Message @event)
             {
                 Bus.Publish(@event);
             }
         }
+
+
+        public void Cancel()
+        {
+            _cancelled = true;
+        }
+
         #region Implementation of IDisposable
         private bool _disposed;
         public void Dispose()
