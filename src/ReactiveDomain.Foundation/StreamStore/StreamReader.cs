@@ -134,7 +134,7 @@ namespace ReactiveDomain.Foundation
                             bool readBackwards = false)
         {
             if (checkpoint != null)
-                Ensure.Positive((long)checkpoint, nameof(checkpoint));
+                Ensure.Nonnegative((long)checkpoint, nameof(checkpoint));
             if (count != null)
                 Ensure.Positive((long)count, nameof(count));
             if (!ValidateStreamName(streamName))
@@ -170,7 +170,11 @@ namespace ReactiveDomain.Foundation
             // do not publish or increase counters if cancelled
             if (_cancelled) return;
 
-            Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+            if (recordedEvent is ProjectedEvent projectedEvent)
+                Interlocked.Exchange(ref StreamPosition, projectedEvent.ProjectedEventNumber);
+            else
+                Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+            
             if (Serializer.Deserialize(recordedEvent) is Message @event)
             {
                 Bus.Publish(@event);

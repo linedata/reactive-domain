@@ -169,7 +169,7 @@ namespace ReactiveDomain.Testing.EventStore {
                                     long start,
                                     long count,
                                     UserCredentials credentials = null) {
-            if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be positve or -1 for reading from the end of the stream.");
+            if (start < -1) throw new ArgumentOutOfRangeException($"{nameof(start)} must be non-negative or -1 for reading from the end of the stream.");
             List<RecordedEvent> stream;
             lock (_store) {
                 if (!_store.ContainsKey(streamName)) { return new StreamNotFoundSlice(streamName); }

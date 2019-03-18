@@ -300,6 +300,60 @@ namespace ReactiveDomain.Testing.EventStore
                 Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(longStreamName, checkpoint: 1000, count: 0, readBackwards: true));
             }
         }
+        [Fact]
+        public void can_read_from_projection()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var streamName2 = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+                var categoryStream = _streamNameBuilder.GenerateForCategory(typeof(TestAggregate));
+                var typeStream = _streamNameBuilder.GenerateForEventType(nameof(ReadTestEvent));
+
+                AppendEventArray(NUM_OF_EVENTS, conn, streamName2);
+                Thread.Sleep(1000);
+                reader.EventStream.Subscribe<Event>(this);
+
+                // forward 2 from beginning
+                _count = 0;
+                reader.Read(categoryStream, count: 2);
+                Assert.Equal(2, _count);
+                Assert.Equal(1, reader.Position);
+
+                // forward all from 0
+                _count = 0;
+                reader.Read(categoryStream);
+                Assert.Equal(2 * NUM_OF_EVENTS, _count);
+                Assert.Equal(2 * NUM_OF_EVENTS - 1, reader.Position);
+
+                // forward 10 from 5
+                _count = 0;
+                reader.Read(categoryStream, checkpoint: 5, count: 10);
+                Assert.Equal(10, _count);
+                Assert.Equal(14, reader.Position);
+                
+                // backward all
+                _count = 0;
+                reader.Read(categoryStream, readBackwards: true);
+                Assert.Equal(2 * NUM_OF_EVENTS, _count);
+                Assert.Equal(0, reader.Position);
+
+
+                // backward 5 from 10
+                _count = 0;
+                reader.Read(categoryStream, checkpoint: 10, count: 5, readBackwards: true);
+                Assert.Equal(5, _count);
+                Assert.Equal(6, reader.Position);
+
+
+                // backward 10 from 5
+                _count = 0;
+                reader.Read(categoryStream, checkpoint: 5, count: 10, readBackwards: true);
+                Assert.Equal(6, _count);
+                Assert.Equal(0, reader.Position);
+            }
+        }
+
 
 
         public void Handle(Event message)
