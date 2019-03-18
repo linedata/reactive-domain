@@ -206,10 +206,7 @@ namespace ReactiveDomain.Foundation
         }
         protected virtual void GotEvent(RecordedEvent recordedEvent)
         {
-            if (recordedEvent is ProjectedEvent projectedEvent)
-                Interlocked.Exchange(ref StreamPosition, projectedEvent.ProjectedEventNumber);
-            else
-                Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+            Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
             if (Serializer.Deserialize(recordedEvent) is Message @event)
             {
                 Bus.Publish(@event);

@@ -170,10 +170,7 @@ namespace ReactiveDomain.Foundation
             // do not publish or increase counters if cancelled
             if (_cancelled) return;
 
-            if (recordedEvent is ProjectedEvent projectedEvent)
-                Interlocked.Exchange(ref StreamPosition, projectedEvent.ProjectedEventNumber);
-            else
-                Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
+            Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
             
             if (Serializer.Deserialize(recordedEvent) is Message @event)
             {

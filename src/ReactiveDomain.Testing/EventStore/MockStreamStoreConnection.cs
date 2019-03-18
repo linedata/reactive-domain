@@ -397,10 +397,10 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                     streamName,
-                    stream.Count,
+                    @event.Event.EventNumber,
                     @event.Event.EventStreamId,
                     @event.Event.EventId, // reusing since the projection is linking to the original event
-                    @event.Event.EventNumber,
+                    stream.Count,
                     @event.Event.EventType,
                     @event.Event.Data,
                     @event.Event.Metadata,
@@ -409,7 +409,7 @@ namespace ReactiveDomain.Testing.EventStore {
                     epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
         /// <summary>
@@ -434,10 +434,10 @@ namespace ReactiveDomain.Testing.EventStore {
 
             var projectedEvent = new ProjectedEvent(
                 streamName,
-                stream.Count,
+                @event.Event.EventNumber,
                 @event.Event.EventStreamId,
                 @event.Event.EventId, // reusing since the projection is linking to the original event
-                @event.Event.EventNumber,
+                stream.Count,
                 @event.Event.EventType,
                 @event.Event.Data,
                 @event.Event.Metadata,
@@ -446,7 +446,7 @@ namespace ReactiveDomain.Testing.EventStore {
                 epochTime);
             stream.Add(projectedEvent);
             All.Add(projectedEvent);
-            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.ProjectedEventNumber));
+            _inboundEventHandler.Handle(new EventWritten(streamName, projectedEvent, true, projectedEvent.EventNumber));
         }
 
 

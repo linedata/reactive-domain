@@ -228,7 +228,7 @@ namespace ReactiveDomain.EventStore {
             Ensure.NotNull(resolvedEvents, nameof(resolvedEvents));
             var events = new RecordedEvent[resolvedEvents.Length];
             for (int i = 0; i < resolvedEvents.Length; i++) {
-                events[i] = resolvedEvents[i].Event.ToRecordedEvent();
+                events[i] = resolvedEvents[i].OriginalEvent.ToRecordedEvent();
             }
             return events;
         }
