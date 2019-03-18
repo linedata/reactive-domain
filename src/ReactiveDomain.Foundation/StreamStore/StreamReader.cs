@@ -1,7 +1,8 @@
-﻿using System;
-using System.Threading;
-using ReactiveDomain.Messaging;
+﻿using ReactiveDomain.Messaging;
 using ReactiveDomain.Messaging.Bus;
+using ReactiveDomain.Util;
+using System;
+using System.Threading;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation
@@ -132,23 +133,32 @@ namespace ReactiveDomain.Foundation
                             long? count = null,
                             bool readBackwards = false)
         {
+            if (checkpoint != null)
+                Ensure.Positive((long)checkpoint, nameof(checkpoint));
+            if (count != null)
+                Ensure.Positive((long)count, nameof(count));
             if (!ValidateStreamName(streamName))
                 throw new ArgumentException("Stream not found.", streamName);
 
             _cancelled = false;
             StreamName = streamName;
             long sliceStart = checkpoint ?? (readBackwards ? -1 : 0);
+            long remaining = count ?? long.MaxValue;
             StreamEventsSlice currentSlice;
+
             do
             {
-                currentSlice = !readBackwards ? 
-                    _streamStoreConnection.ReadStreamForward(streamName, sliceStart, ReadPageSize) : 
-                    _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, ReadPageSize);
+                var page = remaining < ReadPageSize ? remaining: ReadPageSize;
+                
+                currentSlice = !readBackwards
+                    ? _streamStoreConnection.ReadStreamForward(streamName, sliceStart, page)
+                    : _streamStoreConnection.ReadStreamBackward(streamName, sliceStart, page);
 
-                    sliceStart = currentSlice.NextEventNumber;
-                    Array.ForEach(currentSlice.Events, EventRead);
+                remaining -= currentSlice.Events.Length;
+                sliceStart = currentSlice.NextEventNumber;
+                Array.ForEach(currentSlice.Events, EventRead);
 
-            } while (!currentSlice.IsEndOfStream && !_cancelled);
+            } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
         }
         public bool ValidateStreamName(string streamName)
         {

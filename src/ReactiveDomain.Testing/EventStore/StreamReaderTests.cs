@@ -113,6 +113,8 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(_streamName, NUM_OF_EVENTS);
 
                 Assert.Equal(0, _count);
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(_streamName, checkpoint: -10, readBackwards: true));
+
             }
         }
 
@@ -182,6 +184,8 @@ namespace ReactiveDomain.Testing.EventStore
                 reader.Read(_streamName, position, readBackwards: true);
 
                 Assert.Equal(position + 1, _count); // events from positions: N, N-1...0 => N+1 events
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(_streamName, checkpoint: -10, readBackwards: true));
+
             }
         }
 
@@ -222,6 +226,7 @@ namespace ReactiveDomain.Testing.EventStore
 
                 const int ManyEvents = 1000;
 
+                AppendEventArray(ManyEvents, conn, longStreamName);
                 reader.EventStream.Subscribe<Event>(this);
                 _gotEvent = e =>
                 {
@@ -230,7 +235,6 @@ namespace ReactiveDomain.Testing.EventStore
                 };
 
                 // forward
-                AppendEventArray(ManyEvents, conn, longStreamName);
                 reader.Read(longStreamName);
 
                 _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
@@ -239,12 +243,61 @@ namespace ReactiveDomain.Testing.EventStore
                 // reset
                 _count = 0;
                 // backward
-                AppendEventArray(ManyEvents, conn, longStreamName);
                 reader.Read(longStreamName, readBackwards: true);
 
                 _toh.WriteLine($"Read events: {_count} out of {ManyEvents}, cancelled >= #100");
                 Assert.Equal(101, _count);
+            }
+        }
 
+        [Fact]
+        public void can_read_count_events()
+        {
+            foreach (var conn in _stores)
+            {
+                var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
+                var longStreamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
+
+                const int ManyEvents = 1550;
+                AppendEventArray(ManyEvents, conn, longStreamName);
+
+                reader.EventStream.Subscribe<Event>(this);
+
+                // forward from 0
+                _count = 0;
+                reader.Read(longStreamName, count: 10);
+                Assert.Equal(10, _count);
+                
+                // forward 2000
+                _count = 0;
+                reader.Read(longStreamName, count: 2 * ManyEvents);
+                Assert.Equal(ManyEvents, _count);
+
+                // forward 10 from 1000
+                _count = 0;
+                reader.Read(longStreamName, checkpoint: 1000, count: 10);
+                Assert.Equal(10, _count);
+
+                // last 10
+                _count = 0;
+                reader.Read(longStreamName, count:10, readBackwards: true);
+                Assert.Equal(10, _count);
+                
+                // last 2000 out of 1550
+                _count = 0;
+                reader.Read(longStreamName, count: 2 * ManyEvents, readBackwards: true);
+                Assert.Equal(ManyEvents, _count);
+
+                // backward 10 from 1000
+                _count = 0;
+                reader.Read(longStreamName, checkpoint: 1000, count: 10, readBackwards: true);
+                Assert.Equal(10, _count);
+
+                // non-positive count
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(longStreamName, count: -10, readBackwards: true));
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(longStreamName, count: -10));
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(longStreamName, checkpoint: 1000, count: 0));
+                Assert.Throws<ArgumentOutOfRangeException>(() => reader.Read(longStreamName, checkpoint: 1000, count: 0, readBackwards: true));
             }
         }
 
