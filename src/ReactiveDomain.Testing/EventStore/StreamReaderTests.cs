@@ -30,7 +30,7 @@ namespace ReactiveDomain.Testing.EventStore
             var mockStreamStore = new MockStreamStoreConnection("Test-" + Guid.NewGuid());
             mockStreamStore.Connect();
 
-            _stores.Add(mockStreamStore);
+            //_stores.Add(mockStreamStore);
             _stores.Add(fixture.Connection);
 
             _streamName = _streamNameBuilder.GenerateForAggregate(typeof(TestAggregate), Guid.NewGuid());
@@ -326,18 +326,17 @@ namespace ReactiveDomain.Testing.EventStore
                 Assert.Equal(1, reader.Position);
 
 
+                // forward 2 from 12
+                _count = 0;
+                reader.Read(categoryStream, checkpoint: 12, count: 2);
+                Assert.Equal(2, _count);
+                Assert.Equal(13, reader.Position);
+
                 // forward 10 from 5
                 _count = 0;
                 reader.Read(categoryStream, checkpoint: 5, count: 10);
                 Assert.Equal(10, _count);
                 Assert.Equal(14, reader.Position);
-                
-                // backward all
-                //_count = 0;
-                //reader.Read(categoryStream, readBackwards: true);
-                //Assert.Equal(2 * NUM_OF_EVENTS, _count);
-                //Assert.Equal(0, reader.Position);
-
 
                 // backward 5 from 10
                 _count = 0;
