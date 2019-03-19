@@ -77,9 +77,16 @@ namespace ReactiveDomain.Testing.EventStore
                 _count = 0;
                 var reader = new StreamReader("TestReader", conn, _streamNameBuilder, _serializer);
                 reader.EventStream.Subscribe<Event>(this);
+                // forward 1 from beginning
+                _count = 0;
+                Assert.Null(reader.Position);
+                reader.Read(_streamName, count: 1);
+                Assert.Equal(1, _count);
+                Assert.Equal(0, reader.Position);
 
+                // forward all
+                _count = 0;
                 reader.Read(_streamName);
-
                 Assert.Equal(NUM_OF_EVENTS, _count);
             }
         }
@@ -318,11 +325,19 @@ namespace ReactiveDomain.Testing.EventStore
                 Thread.Sleep(100);
                 reader.EventStream.Subscribe<Event>(this);
 
+                // forward 1 from beginning
+                _count = 0;
+                Assert.Null(reader.Position);
+                reader.Read(categoryStream, count: 1);
+                Assert.Equal(1, _count);
+                Assert.Equal(0, reader.Position);
+
                 // forward 2 from beginning
                 _count = 0;
                 reader.Read(categoryStream, count: 2);
                 Assert.Equal(2, _count);
                 Assert.Equal(1, reader.Position);
+                
                 
                 // forward 2 from 12
                 _count = 0;
