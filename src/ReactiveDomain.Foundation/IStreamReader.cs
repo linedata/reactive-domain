@@ -14,7 +14,7 @@ namespace ReactiveDomain.Foundation
         /// <summary>
         /// The ending position of the stream after the read is complete
         /// </summary>
-        long Position { get; }
+        long? Position { get; }
         /// <summary>
         /// The name of the stream being read
         /// </summary>
@@ -51,8 +51,6 @@ namespace ReactiveDomain.Foundation
 
         /// <summary>
         /// Interrupts the reading process. Doesn't guarantee the moment when reading is stopped. For optimization purpose.
-        /// For use in read models when it needs only certain number of events matching some criteria.
-        /// I.e. if model reads stream backward and needs only the last event of particular type in the stream. 
         /// </summary>
         void Cancel();
     }

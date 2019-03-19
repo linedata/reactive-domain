@@ -23,7 +23,8 @@ namespace ReactiveDomain.Foundation
         public ISubscriber EventStream => Bus;
         private readonly IStreamStoreConnection _streamStoreConnection;
         protected long StreamPosition;
-        public long Position => StreamPosition;
+        protected bool firstEventRead;
+        public long? Position => firstEventRead ? StreamPosition : (long?) null;
         public string StreamName { get; private set; }
         private const int ReadPageSize = 500;
 
@@ -141,6 +142,7 @@ namespace ReactiveDomain.Foundation
                 throw new ArgumentException("Stream not found.", streamName);
 
             _cancelled = false;
+            firstEventRead = false;
             StreamName = streamName;
             long sliceStart = checkpoint ?? (readBackwards ? -1 : 0);
             long remaining = count ?? long.MaxValue;
@@ -157,7 +159,7 @@ namespace ReactiveDomain.Foundation
                 remaining -= currentSlice.Events.Length;
                 sliceStart = currentSlice.NextEventNumber;
                 Array.ForEach(currentSlice.Events, EventRead);
-
+                
             } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
         }
         public bool ValidateStreamName(string streamName)
@@ -171,7 +173,8 @@ namespace ReactiveDomain.Foundation
             if (_cancelled) return;
 
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
-            
+            firstEventRead = true;
+
             if (Serializer.Deserialize(recordedEvent) is Message @event)
             {
                 Bus.Publish(@event);
