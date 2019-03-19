@@ -4,7 +4,7 @@ using System;
 
 namespace ReactiveDomain.Foundation
 {
-    public interface IStreamReader
+    public interface IStreamReader : IDisposable
     {
         /// <summary>
         /// The Eventstream the Events are read onto
