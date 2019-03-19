@@ -28,6 +28,16 @@ namespace ReactiveDomain.Foundation
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">read the stream backwards</param>
         void Read(string stream, long? checkpoint = null, long? count = null, bool readBackwards = false);
+        
+        /// <summary>
+        /// By Event Type Projection Reader
+        /// i.e. $et-[MessageType]
+        /// </summary>
+        /// <param name="tMessage">The message type used to generate the stream (projection) name</param>
+        /// <param name="checkpoint">The starting point to read from.</param>
+        /// <param name="count">The count of items to read</param>
+        /// <param name="readBackwards">Read the stream backwards</param>
+        void Read(Type tMessage, long? checkpoint = null, long? count = null, bool readBackwards = false);
 
         /// <summary>
         /// Reads the events on an aggregate root stream
