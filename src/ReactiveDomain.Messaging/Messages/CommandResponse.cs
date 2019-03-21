@@ -3,13 +3,13 @@ using ReactiveDomain.Messaging.Bus;
 
 namespace ReactiveDomain.Messaging
 {
-    public abstract class CommandResponse : CorrelatedMessage
+    public abstract class CommandResponse : CorrelatedMessage, ICommandResponse
     {
-        public Command SourceCommand { get; }
+        public ICommand SourceCommand { get; }
         public Type CommandType => SourceCommand.GetType();
         public Guid CommandId => SourceCommand.MsgId;
 
-        protected CommandResponse(Command sourceCommand):base(sourceCommand.CorrelationId, new SourceId(sourceCommand))   
+        protected CommandResponse(Command sourceCommand) : base(sourceCommand.CorrelationId, new SourceId(sourceCommand))
         {
             SourceCommand = sourceCommand;
         }

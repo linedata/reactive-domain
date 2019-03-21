@@ -1,6 +1,5 @@
 ﻿using System;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.PrivateLedger
 {

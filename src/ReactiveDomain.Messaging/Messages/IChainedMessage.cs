@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ReactiveDomain.Messaging.Messages {
+namespace ReactiveDomain.Messaging {
     public interface IChainedMessage {
         Guid MsgId { get; }
         SourceId SourceId { get; }

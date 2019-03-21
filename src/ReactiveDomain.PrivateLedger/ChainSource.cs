@@ -1,7 +1,6 @@
 using System;
 using Newtonsoft.Json;
 using ReactiveDomain.Messaging;
-using ReactiveDomain.Messaging.Messages;
 
 namespace ReactiveDomain.PrivateLedger
 {

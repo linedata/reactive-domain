@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using ReactiveDomain.Messaging.Messages;
+
 
 namespace ReactiveDomain.Messaging {
     public class Event : CorrelatedMessage, IEvent  {

@@ -7,7 +7,8 @@ namespace ReactiveDomain.Messaging {
     /// A correlated command that is optionally cancellable using a CancellationToken. 
     /// </summary>
     /// <inheritdoc cref="Message"/>
-    public class Command : CorrelatedMessage {
+    public class Command : CorrelatedMessage, ICommand
+    {
 
         public bool TimeoutTcpWait = true;
 
@@ -26,9 +27,11 @@ namespace ReactiveDomain.Messaging {
         /// Does this command allow cancellation?
         /// </summary>
         public bool IsCancelable => CancellationToken != null;
-        
-        public virtual void RegisterOnCancellation(Action action) {
-            if(!IsCancelable) {
+
+        public virtual void RegisterOnCancellation(Action action)
+        {
+            if (!IsCancelable)
+            {
                 throw new InvalidOperationException("Command cannot be canceled");
             }
             CancellationToken?.Register(action);
@@ -42,28 +45,32 @@ namespace ReactiveDomain.Messaging {
         public Command(CorrelatedMessage source, CancellationToken? token = null) : this(source.CorrelationId, new SourceId(source), token) { }
 
         [JsonConstructor]
-        public Command(CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId) {
+        public Command(CorrelationId correlationId, SourceId sourceId, CancellationToken? token = null) : base(correlationId, sourceId)
+        {
             CancellationToken = token;
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has succeeded.
         /// </summary>
-        public CommandResponse Succeed() {
+        public CommandResponse Succeed()
+        {
             return new Success(this);
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has failed.
         /// </summary>
-        public CommandResponse Fail(Exception ex = null) {
+        public CommandResponse Fail(Exception ex = null)
+        {
             return new Fail(this, ex);
         }
 
         /// <summary>
         /// Create a CommandResponse indicating that this command has been canceled.
         /// </summary>
-        public CommandResponse Canceled() {
+        public CommandResponse Canceled()
+        {
             return new Canceled(this);
         }
     }

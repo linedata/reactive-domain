@@ -1,4 +1,4 @@
-﻿namespace ReactiveDomain.Messaging.Messages
+﻿namespace ReactiveDomain.Messaging
 {
     public interface IQueueAffineMessage
     {

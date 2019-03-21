@@ -5,7 +5,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using ReactiveDomain.Messaging.Messages;
 using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
