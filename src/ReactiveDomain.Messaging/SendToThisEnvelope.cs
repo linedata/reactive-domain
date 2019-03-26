@@ -12,7 +12,7 @@ namespace ReactiveDomain.Messaging
             _receiver = receiver;
         }
 
-        public void ReplyWith<T>(T message) where T : Message
+        public void ReplyWith<T>(T message) where T : IMessage
         {
             var x = _receiver as IHandle<T>;
             if (x != null)

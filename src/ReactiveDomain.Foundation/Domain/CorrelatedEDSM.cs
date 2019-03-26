@@ -1,50 +1,69 @@
 ﻿using System;
-using System.CodeDom;
 using ReactiveDomain.Messaging;
 
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain
 {
-    public class CorrelatedEDSM: EventDrivenStateMachine
+    public class CorrelatedEDSM : EventDrivenStateMachine, ICorrelatedEventSource
     {
-        public CorrelatedEDSM() {}
-        public CorrelatedEDSM(CorrelatedMessage source) {
-            Source = source;
+        public CorrelatedEDSM() { }
+        public CorrelatedEDSM(ICorrelatedMessage source = null)
+        {
+            if (source == null) { return; }
+            _correlationId = source.CorrelationId;
+            _causationId = source.MsgId;
         }
-        public CorrelatedMessage Source {
-            get;
-            protected set;
+        
+        private Guid _correlationId;
+        private Guid _causationId;
+        ICorrelatedMessage ICorrelatedEventSource.Source
+        {
+          
+            set
+            {
+                if (_correlationId != Guid.Empty && HasRecordedEvents)
+                {
+                    throw new InvalidOperationException(
+                        "Cannot change source unless there are no recorded events, or current source is null");
+                }               
+                _correlationId = value.CorrelationId;
+                _causationId = value.MsgId;
+            }
         }
 
-        public void ApplyNewSource(CorrelatedMessage source) {
-            if (Source != null || HasRecordedEvents) {
-                throw new InvalidOperationException(
-                    "Cannot change source unless there are no recorded events, and current source is null");
-            }
-            Source = source;
-        }
-        protected override void TakeEventStarted() {
-            if (HasRecordedEvents && Source == null) {
+
+        protected override void TakeEventStarted()
+        {
+            if (HasRecordedEvents && _correlationId == Guid.Empty)
+            {
                 throw new InvalidOperationException(
                     "Cannot take events without valid source.");
             }
         }
-        protected override void TakeEventsCompleted(){
-            Source = null;
+        protected override void TakeEventsCompleted()
+        {
+            _correlationId = Guid.Empty;
+            _causationId = Guid.Empty;
             base.TakeEventsCompleted();
         }
-        protected override void OnEventRaised(object @event) {
-            
-            if (Source == null) {
-                throw new InvalidOperationException(
-                    "Cannot raise events without valid source.");
+        protected override void OnEventRaised(object @event)
+        {
+            if (@event is ICorrelatedMessage correlatedEvent)
+            {
+                if (_correlationId == Guid.Empty)
+                {
+                    throw new InvalidOperationException(
+                        "Cannot raise events without valid source.");
+                }
+                if (correlatedEvent.CorrelationId != Guid.Empty || correlatedEvent.CausationId != Guid.Empty)
+                {
+                    throw new InvalidOperationException("Cannot raise events with a different source.");
+                }
+                correlatedEvent.CorrelationId = _correlationId;
+                correlatedEvent.CausationId = _causationId;
             }
-
-            if (!(@event is CorrelatedMessage correlated) ||
-                !correlated.CorrelationId.Equals(Source.CorrelationId) ||
-                correlated.SourceId != Source.MsgId) {
-                throw new InvalidOperationException(
-                    $"Missing or mismatched source for event {@event.GetType().Name}.");
+            else {
+                throw new InvalidOperationException("Cannot raise uncorrelated events from correlated Aggrgate.");
             }
             base.OnEventRaised(@event);
         }

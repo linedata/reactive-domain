@@ -7,8 +7,8 @@ using ReactiveDomain.Messaging.Bus;
 namespace ReactiveDomain.Messaging
 {
     public sealed class RequestResponseDispatcher<TRequest, TResponse> : IHandle<TResponse>
-        where TRequest : Message
-        where TResponse : Message
+        where TRequest : IMessage
+        where TResponse : IMessage
     {
         //NOTE: this class is not intended to be used from multiple threads except from the QueuedHandlerThreadPool
         //however it supports count requests from other threads for statistics purposes

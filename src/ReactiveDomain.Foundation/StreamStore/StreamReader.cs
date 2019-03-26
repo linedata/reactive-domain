@@ -175,7 +175,7 @@ namespace ReactiveDomain.Foundation
             Interlocked.Exchange(ref StreamPosition, recordedEvent.EventNumber);
             firstEventRead = true;
 
-            if (Serializer.Deserialize(recordedEvent) is Message @event)
+            if (Serializer.Deserialize(recordedEvent) is IMessage @event)
             {
                 Bus.Publish(@event);
             }

@@ -1,12 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using System;
 
-
-namespace ReactiveDomain.Messaging {
-    public class Event : CorrelatedMessage, IEvent  {
+namespace ReactiveDomain.Messaging
+{
+    public abstract class Event : Message, ICorrelatedMessage, IEvent
+    {
         protected ushort Version = 1;
-       
-        protected Event(CorrelatedMessage source):base(source.CorrelationId,new SourceId(source)){}
-        [JsonConstructor]
-        protected Event(CorrelationId correlationId, SourceId sourceId):base(correlationId, sourceId) { }
+        public Guid CorrelationId { get; set; }
+        public Guid CausationId { get; set; }
     }
 }

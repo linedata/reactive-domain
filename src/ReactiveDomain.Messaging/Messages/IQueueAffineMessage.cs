@@ -1,6 +1,6 @@
 ﻿namespace ReactiveDomain.Messaging
 {
-    public interface IQueueAffineMessage
+    public interface IQueueAffineMessage : IMessage
     {
         int QueueId { get; }
     }

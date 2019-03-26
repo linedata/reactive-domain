@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Threading;
 
 namespace ReactiveDomain.Messaging
 {
-    public interface ICommand : IMessage
+    public interface ICommand : ICorrelatedMessage
     {
         bool IsCancelable { get; }
         bool IsCanceled { get; }
+        CancellationToken? CancellationToken { get; }
 
         void RegisterOnCancellation(Action action);
         CommandResponse Succeed();

@@ -15,7 +15,7 @@ namespace ReactiveDomain.Messaging
             _createdOnThread = crossThread ? -1 : Thread.CurrentThread.ManagedThreadId;
         }
 
-        public void ReplyWith<T>(T message) where T : Message
+        public void ReplyWith<T>(T message) where T : IMessage
         {
             Debug.Assert(_createdOnThread == -1 || 
                 Thread.CurrentThread.ManagedThreadId == _createdOnThread || _publisher is IThreadSafePublisher);

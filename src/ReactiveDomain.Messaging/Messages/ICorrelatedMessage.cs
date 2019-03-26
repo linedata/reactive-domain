@@ -1,8 +1,10 @@
-﻿namespace ReactiveDomain.Messaging
+﻿using System;
+
+namespace ReactiveDomain.Messaging
 {
-    public interface ICorrelatedMessage
+    public interface ICorrelatedMessage : IMessage
     {
-        CorrelationId CorrelationId { get; }
-        SourceId SourceId { get; }
+        Guid CorrelationId { get; set; }
+        Guid CausationId { get; set; }
     }
 }

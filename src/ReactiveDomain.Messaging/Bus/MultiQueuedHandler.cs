@@ -9,7 +9,7 @@ using ReactiveDomain.Util;
 
 namespace ReactiveDomain.Messaging.Bus
 {
-    public class MultiQueuedHandler : IHandle<Message>, IPublisher, IThreadSafePublisher
+    public class MultiQueuedHandler : IHandle<IMessage>, IPublisher, IThreadSafePublisher
     {
         private readonly int _queueCount;
 
@@ -23,12 +23,12 @@ namespace ReactiveDomain.Messaging.Bus
         }
         public readonly IQueuedHandler[] Queues;
 
-        private readonly Func<Message, int> _queueHash;
+        private readonly Func<IMessage, int> _queueHash;
         private int _nextQueueNum = -1;
 
         public MultiQueuedHandler(int queueCount,
                                   Func<int, IQueuedHandler> queueFactory,
-                                  Func<Message, int> queueHash = null)
+                                  Func<IMessage, int> queueHash = null)
         {
             _queueCount = queueCount;
             Ensure.Positive(queueCount, "queueCount");
@@ -48,7 +48,7 @@ namespace ReactiveDomain.Messaging.Bus
             Ensure.Positive(queues.Length, "queues.Length");
         }
 
-        public MultiQueuedHandler(IQueuedHandler[] queues, Func<Message, int> queueHash)
+        public MultiQueuedHandler(IQueuedHandler[] queues, Func<IMessage, int> queueHash)
         {
             Ensure.NotNull(queues, "queues");
             Ensure.Positive(queues.Length, "queues.Length");
@@ -57,7 +57,7 @@ namespace ReactiveDomain.Messaging.Bus
             _queueHash = queueHash ?? NextQueueHash;
         }
 
-        private int NextQueueHash(Message msg)
+        private int NextQueueHash(IMessage msg)
         {
             return Interlocked.Increment(ref _nextQueueNum);
         }
@@ -81,12 +81,12 @@ namespace ReactiveDomain.Messaging.Bus
             Task.WaitAll(stopTasks);
         }
 
-        public void Handle(Message message)
+        public void Handle(IMessage message)
         {
             Publish(message);
         }
 
-        public void Publish(Message message)
+        public void Publish(IMessage message)
         {
             // ReSharper disable once SuspiciousTypeConversion.Global
             var affineMsg = message as IQueueAffineMessage;
@@ -95,7 +95,7 @@ namespace ReactiveDomain.Messaging.Bus
             Queues[queueNum].Publish(message);
         }
 
-        public void PublishToAll(Message message)
+        public void PublishToAll(IMessage message)
         {
             for (var i = 0; i < Queues.Length; ++i)
             {

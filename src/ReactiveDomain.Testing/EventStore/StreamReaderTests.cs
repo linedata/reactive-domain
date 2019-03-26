@@ -21,7 +21,7 @@ namespace ReactiveDomain.Testing.EventStore
         private long _count;
         private readonly int NUM_OF_EVENTS = 10;
         private readonly ITestOutputHelper _toh;
-        private Action<Event> _gotEvent;
+        private Action<IMessage> _gotEvent;
 
         public StreamReaderTests(ITestOutputHelper toh, StreamStoreConnectionFixture fixture)
         {
@@ -59,7 +59,7 @@ namespace ReactiveDomain.Testing.EventStore
             _toh.WriteLine(
                 $"Appending {numEventsToBeSent} events to stream \"{streamName}\" with connection {conn.ConnectionName}");
 
-            var events = new Event[numEventsToBeSent];
+            var events = new IMessage[numEventsToBeSent];
             for (int evtNumber = 0; evtNumber < numEventsToBeSent; evtNumber++)
             {
                 events[evtNumber] = new ReadTestEvent(evtNumber);
@@ -381,13 +381,12 @@ namespace ReactiveDomain.Testing.EventStore
         }
 
         public class ReadTestEvent : Event
-        {
+        {           
             public readonly int MessageNumber;
 
             public ReadTestEvent(
-                int messageNumber
-            ) : base(NewRoot())
-            {
+                int messageNumber)
+            {               
                 MessageNumber = messageNumber;
             }
         }
