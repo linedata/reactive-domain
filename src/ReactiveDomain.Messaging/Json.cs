@@ -15,7 +15,7 @@ namespace ReactiveDomain.Messaging
     public static class Json
     {
         private static IContractResolver GetContractresolver() {
-            var resolver = new CamelCasePropertyNamesContractResolver();
+            var resolver = new DefaultContractResolver();
             resolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
             return resolver;
         }

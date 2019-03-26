@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using ReactiveDomain.Messaging;
@@ -18,12 +19,18 @@ namespace ReactiveDomain.Foundation
 
         static JsonMessageSerializer()
         {
+            // SerializerSettings = Json.JsonSettings;
             var contractResolver = new DefaultContractResolver();
-             contractResolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
+            contractResolver.DefaultMembersSearchFlags |= BindingFlags.NonPublic;
             SerializerSettings = new JsonSerializerSettings()
             {
                 ContractResolver = contractResolver,
                 TypeNameHandling = TypeNameHandling.Auto,
+                DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore,                
+                Converters = new JsonConverter[] { new StringEnumConverter() }
             };
         }
         public EventData Serialize(object @event, IDictionary<string, object> headers = null)
