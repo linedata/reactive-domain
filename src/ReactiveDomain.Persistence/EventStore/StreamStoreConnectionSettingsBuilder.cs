@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using EventStore.ClientAPI;
 using ReactiveDomain.Logging;
 using ReactiveDomain.Util;
@@ -18,11 +14,11 @@ namespace ReactiveDomain.EventStore {
 
         private ILogger _log = new Logging.NullLogger();
         private bool _verboseLogging;
-        private IPEndPoint _singleServerIpEndPoint;
+        private IPAddress _singleServerIpAddress;
         private string _clusterDns;
         private IPAddress[] _gossipSeeds;
-        private int _gossipExternalHttpPort;
-        private UserCredentials _defaultUserCredentials;
+        private int _networkIpPort;
+        private UserCredentials _userCredentials;
         
         internal StreamStoreConnectionSettingsBuilder() { }
 
@@ -54,40 +50,39 @@ namespace ReactiveDomain.EventStore {
         }
 
         /// <summary>
-        /// Sets the default Reactive Domain <see cref="UserCredentials"/> used for this connection.
-        /// If user credentials are not given for an operation, these credentials will be used.
+        /// Sets the Reactive Domain <see cref="UserCredentials"/> used for this connection.
         /// </summary>
         /// <param name="userCredentials"></param>
         /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder SetDefaultUserCredentials(UserCredentials userCredentials) {
-            _defaultUserCredentials = userCredentials;
+        public StreamStoreConnectionSettingsBuilder SetUserCredentials(UserCredentials userCredentials) {
+            _userCredentials = userCredentials;
             return this;
         }
 
         /// <summary>
-        /// Sets the single data store instance <see cref="IPEndPoint"/> using a TCP port.
-        /// </summary>
-        /// <param name="singleServerIpEndPoint">The IP and port combined in an TCP <see cref="IPEndPoint"/>.</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException">If <paramref name="singleServerIpEndPoint" /> is null or empty.</exception>
-        public StreamStoreConnectionSettingsBuilder SetSingleServerIpEndPoint(IPEndPoint singleServerIpEndPoint) {
-            Ensure.NotNull<IPEndPoint>(singleServerIpEndPoint, nameof(singleServerIpEndPoint));
-            _singleServerIpEndPoint = singleServerIpEndPoint;
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the single data store instance <see cref="IPEndPoint"/> using an IP address and TCP port.
+        /// Sets the single data store instance <see cref="IPAddress"/> using an IP address x.x.x.x.
         /// </summary>
         /// <param name="ipAddress">IPAddress: The IP address of the data store server.</param>
-        /// <param name="tcpPort">int: The TCP port used to connect to the server.</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">If <paramref name="ipAddress" /> or <paramref name="tcpPort"/> is null or empty.</exception>
-        public StreamStoreConnectionSettingsBuilder SetSingleServerIpEndPoint(IPAddress ipAddress, int tcpPort) {
+        /// <exception cref="ArgumentNullException">If <paramref name="ipAddress" /> is null or empty.</exception>
+        public StreamStoreConnectionSettingsBuilder SetSingleServerIpAddress(IPAddress ipAddress) {
             Ensure.NotNull(ipAddress, nameof(ipAddress));
-            Ensure.Between(1024, 65535, tcpPort, nameof(tcpPort));
+            _singleServerIpAddress = ipAddress;
+            return this;
+        }
 
-            _singleServerIpEndPoint = new IPEndPoint(ipAddress, tcpPort);
+        /// <summary>
+        /// Sets the network port used to communicate with a single server EventStore.
+        /// </summary>
+        /// <remarks>
+        /// For a single server connection, this is the TCP port (often 1113).
+        /// </remarks>
+        /// <param name="tcpPort">int: The network port used to connect to the server.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">If <paramref name="tcpPort"/> is not in the proper range.</exception>
+        public StreamStoreConnectionSettingsBuilder SetSingleServerTcpPort(int tcpPort) {
+            Ensure.Between(1024, 65535, tcpPort, nameof(tcpPort));
+            _networkIpPort = tcpPort;
             return this;
         }
 
@@ -118,14 +113,17 @@ namespace ReactiveDomain.EventStore {
         /// <param name="clusterGossipPort">The cluster gossip port.</param>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder SetClusterGossipPort(int clusterGossipPort) {
-            Ensure.Positive(clusterGossipPort, "clusterGossipPort");
-            _gossipExternalHttpPort = clusterGossipPort;
+            Ensure.Between(1024, 65535, clusterGossipPort, "clusterGossipPort");
+            _networkIpPort = clusterGossipPort;
             return this;
         }
 
         /// <summary>
-        /// Turns on verbose <see cref="EventStoreConnection"/> internal logic logging. By contains default information about connection, disconnection and errors, but you can customize output.
+        /// Turns on verbose <see cref="EventStoreConnection"/> internal logic logging. 
         /// </summary>
+        /// <remarks>
+        /// Contains information about connection, disconnection and errors.
+        /// </remarks>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder EnableVerboseLogging() {
             _verboseLogging = true;
@@ -156,11 +154,11 @@ namespace ReactiveDomain.EventStore {
         /// </summary>
         public StreamStoreConnectionSettings Build() {
             return new StreamStoreConnectionSettings(
-                _defaultUserCredentials,
-                _singleServerIpEndPoint,
+                _userCredentials,
+                _singleServerIpAddress,
                 _clusterDns,
                 _gossipSeeds,
-                _gossipExternalHttpPort,
+                _networkIpPort,
                 _log,
                 _verboseLogging);
         }

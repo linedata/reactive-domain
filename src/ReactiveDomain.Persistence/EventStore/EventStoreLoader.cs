@@ -53,7 +53,7 @@ namespace ReactiveDomain.EventStore {
         public EventStoreLoader(StreamStoreConnectionSettings connectionSettings)
         {
             if (connectionSettings.IsSingleConnection) {
-                Connect(connectionSettings.UserCredentials, connectionSettings.SingleServerIpEndPoint, connectionSettings.VerboseLogging);
+                Connect(connectionSettings.UserCredentials, connectionSettings.SingleServerIpAddress, connectionSettings.NetworkIpPort, connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsDnsClusterConnection) {
                 Connect(connectionSettings.UserCredentials, connectionSettings.ClusterDns, connectionSettings.NetworkIpPort, connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsGossipSeedClusterConnection) {
@@ -67,15 +67,19 @@ namespace ReactiveDomain.EventStore {
         /// Connect to a single EventStore server with an IP address and a port
         /// </summary>
         /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
-        /// <param name="tcpEndpoint">IPEndpoint: IP address and port of the EventStore server</param>
+        /// <param name="serverIpAddress"><see cref="IPAddress"/>: IP address and port of the EventStore server</param>
+        /// <param name="tcpPort">int: IP address and port of the EventStore server</param>
         /// <param name="verboseLogging">bool: Setup an EventStore connection with verbose logging turned on. Default = false.</param>
         private void Connect(
             UserCredentials credentials,
-            IPEndPoint tcpEndpoint,
+            IPAddress serverIpAddress,
+            int tcpPort,
             bool verboseLogging = false) {
 
             var settings = SetClientConnectionSettings(credentials, verboseLogging);
-            Connection = new EventStoreConnectionWrapper(EventStoreConnection.Create(settings, tcpEndpoint, $"{tcpEndpoint}-Single Connection"));
+            Connection = new EventStoreConnectionWrapper(
+                             EventStoreConnection.Create(settings, new IPEndPoint(serverIpAddress, tcpPort), $"{serverIpAddress}-Single Connection")
+            );
             if (Connection != null) return;
             _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
             TeardownEventStore(false);
@@ -140,36 +144,6 @@ namespace ReactiveDomain.EventStore {
             if (Connection != null) return;
             _log.Error($"EventStore Custer of {gossipSeeds.Length} Connection is null - Diagnostic Monitoring will be unavailable.");
             TeardownEventStore(false);
-        }
-
-        /// <summary>
-        /// Connect to a single EventStore server with an IP address and a port
-        /// </summary>
-        /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
-        /// <param name="server">IPAddress: IP address of the EventStore server</param>
-        /// <param name="tcpPort">int: TCP communication port on the server</param>
-        [Obsolete("Connect is deprecated, please use the EventStoreLoader constructor instead. Will be made removed in the next release.")]
-        public void Connect(
-                    UserCredentials credentials,
-                    IPAddress server,
-                    int tcpPort) {
-        var tcpEndpoint = new IPEndPoint(server, tcpPort);
-
-            var settings = ConnectionSettings.Create()
-                .SetDefaultUserCredentials(new global::EventStore.ClientAPI.SystemData.UserCredentials(credentials.Username, credentials.Password))
-                .KeepReconnecting()
-                .KeepRetrying()
-                .UseConsoleLogger()
-                .Build();
-
-            Connection = new EventStoreConnectionWrapper(EventStoreConnection.Create(settings, tcpEndpoint, "Default Connection"));
-            if (Connection == null) {
-                _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
-                TeardownEventStore(false);
-                return;
-            }
-
-            StartEventStore();
         }
 
         public static EventData ToEventData(
@@ -237,7 +211,7 @@ namespace ReactiveDomain.EventStore {
                         }
                         break;
                     case StartConflictOption.Error:
-                        throw new Exception("Conflicting Eventstore running.");
+                        throw new Exception("Conflicting EventStore running.");
                 }
             }
 
@@ -255,7 +229,7 @@ namespace ReactiveDomain.EventStore {
                 };
                 _process.Start();
             }
-            Connect(credentials, new IPEndPoint(server,tcpPort));
+            Connect(credentials, server, tcpPort);
         }
 
         /// <summary>
