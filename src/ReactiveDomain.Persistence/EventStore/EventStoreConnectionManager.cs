@@ -85,7 +85,7 @@ namespace ReactiveDomain.EventStore {
             );
             if (Connection != null) return;
             _log.Error("Connection to EventStore is null,  - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore(false);
+            TeardownEventStore();
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace ReactiveDomain.EventStore {
 
             if (Connection != null) return;
             _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore(false);
+            TeardownEventStore();
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace ReactiveDomain.EventStore {
 
             if (Connection != null) return;
             _log.Error($"EventStore Custer of {gossipSeeds.Length} Connection is null - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore(false);
+            TeardownEventStore();
         }
 
         /// <summary>
@@ -255,32 +255,23 @@ namespace ReactiveDomain.EventStore {
         {
             Ensure.NotNull(credentials, "credentials");
 
-            if (verboseLogging) {
-                return ConnectionSettings.Create()
-                    .SetDefaultUserCredentials(credentials.ToESCredentials())
-                    .KeepReconnecting()
-                    .KeepRetrying()
-                    .UseConsoleLogger()
-                    .EnableVerboseLogging()
-                    .Build();
-            } else {
-                return ConnectionSettings.Create()
-                    .SetDefaultUserCredentials(credentials.ToESCredentials())
-                    .KeepReconnecting()
-                    .KeepRetrying()
-                    .UseConsoleLogger()
-                    .Build();
-            }
+            return ConnectionSettings.Create()
+                .SetDefaultUserCredentials(credentials.ToESCredentials())
+                .KeepReconnecting()
+                .KeepRetrying()
+                .UseConsoleLogger()
+                .IfVerboseLogging(() => verboseLogging, (x) => x.EnableVerboseLogging())
+                .Build();
         }
 
         /// <summary>
-            ///  Terminate an EventStore instance created by StartEventStore
-            /// </summary>
-            /// <remarks>
-            /// Yin for the <see cref="StartEventStore"/> yang.
-            /// </remarks>
-            /// <param name="leaveRunning">bool: true = close the connection, but leave the process running.</param>
-            public void TeardownEventStore(bool leaveRunning = true) {
+        ///  Terminate an EventStore instance created by StartEventStore
+        /// </summary>
+        /// <remarks>
+        /// Yin for the <see cref="StartEventStore"/> yang.
+        /// </remarks>
+        /// <param name="leaveRunning">bool: true = close the connection, but leave the process running.</param>
+        public void TeardownEventStore(bool leaveRunning = true) {
             Connection?.Close();
             if (leaveRunning || _process == null || _process.HasExited) return;
             _process.Kill();
