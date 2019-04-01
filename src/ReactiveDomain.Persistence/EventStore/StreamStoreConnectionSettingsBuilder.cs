@@ -10,7 +10,7 @@ namespace ReactiveDomain.EventStore {
     /// Used to build a <see cref="StreamStoreConnectionSettings"/> object to describe the connection to the
     /// underlying event based data store.
     /// </summary>
-    public sealed class StreamStoreConnectionSettingsBuilder {
+    public class StreamStoreConnectionSettingsBuilder {
 
         private ILogger _log = new Logging.NullLogger();
         private bool _verboseLogging;
@@ -124,9 +124,10 @@ namespace ReactiveDomain.EventStore {
         /// <remarks>
         /// Contains information about connection, disconnection and errors.
         /// </remarks>
+        /// <param name="verbose">Turn verbose logging on or off.</param>
         /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder EnableVerboseLogging() {
-            _verboseLogging = true;
+        public StreamStoreConnectionSettingsBuilder SetVerboseLogging(bool verbose) {
+            _verboseLogging = verbose;
             return this;
         }
 

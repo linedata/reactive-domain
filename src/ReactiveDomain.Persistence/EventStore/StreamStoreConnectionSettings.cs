@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using EventStore.ClientAPI;
 using ReactiveDomain.Util;
 using ReactiveDomain.Logging;
@@ -68,19 +69,23 @@ namespace ReactiveDomain.EventStore
         /// <summary>
         /// Convenience connection type variables
         /// </summary>
-        private uint _connectionType = 0;
-        private const uint SingleNodeMask = 0x0001;
-        private const uint DnsClusterMask = 0x0010;
-        private const uint GossipSeedsClusterMask = 0x0100;
-        public bool IsSingleConnection => (_connectionType ^ SingleNodeMask) == 0;
-        public bool IsDnsClusterConnection => (_connectionType ^ DnsClusterMask) == 0;
-        public bool IsGossipSeedClusterConnection => (_connectionType ^ GossipSeedsClusterMask) == 0;
+        private ConnectionType _connectionType = 0;
+
+        private enum ConnectionType {
+            SingleNode,
+            DnsCluster,
+            GossipSeedsCluster
+        }
+
+        public bool IsSingleConnection => _connectionType == ConnectionType.SingleNode;
+        public bool IsDnsClusterConnection => _connectionType == ConnectionType.DnsCluster;
+        public bool IsGossipSeedClusterConnection => _connectionType == ConnectionType.GossipSeedsCluster;
 
         internal StreamStoreConnectionSettings(
             UserCredentials userCredentials,
             IPAddress singleServerIpAddress,
             string clusterDns,
-            IPAddress[] ipAddresses,
+            IReadOnlyList<IPAddress> ipAddresses,
             int networkIpPort,
             Logging.ILogger log,
             bool verboseLogging = false)
@@ -90,19 +95,19 @@ namespace ReactiveDomain.EventStore
             Ensure.Between(1024, 65535, networkIpPort, nameof(networkIpPort));
 
             if (singleServerIpAddress != null && !string.IsNullOrWhiteSpace(clusterDns) ||
-                singleServerIpAddress != null && ipAddresses != null && ipAddresses.Length > 0 ||
-                !string.IsNullOrWhiteSpace(clusterDns) && ipAddresses != null && ipAddresses.Length > 0) {
-                    throw new StreamStoreConnectionException($"Conflicting server or cluster input passed.");
+                singleServerIpAddress != null && ipAddresses != null && ipAddresses.Count > 0 ||
+                !string.IsNullOrWhiteSpace(clusterDns) && ipAddresses != null && ipAddresses.Count > 0) {
+                    throw new StreamStoreConnectionException("Conflicting server or cluster input passed.");
             }
 
             if (singleServerIpAddress != null) {
-                _connectionType |= SingleNodeMask;
+                _connectionType = ConnectionType.SingleNode;
             } else if (!string.IsNullOrWhiteSpace(clusterDns)) {
-                _connectionType |= DnsClusterMask;
-            } else if (ipAddresses != null) {
-                _connectionType = ipAddresses.Length > 0 ? _connectionType |= GossipSeedsClusterMask : _connectionType &= GossipSeedsClusterMask;
+                _connectionType = ConnectionType.DnsCluster;
+            } else if (ipAddresses != null && ipAddresses.Count > 0) {
+                _connectionType = ConnectionType.GossipSeedsCluster;
 
-                for (var i = 0; i < ipAddresses.Length; i++)
+                for (var i = 0; i < ipAddresses.Count; i++)
                 {
                     var ipendpoint = new IPEndPoint(ipAddresses[i], networkIpPort);
                     GossipSeeds[i] = new GossipSeed(ipendpoint, ipAddresses[i].ToString());
