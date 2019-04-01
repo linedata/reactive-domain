@@ -16,7 +16,7 @@ namespace ReactiveDomain.EventStore {
         private bool _verboseLogging;
         private IPAddress _singleServerIpAddress;
         private string _clusterDns;
-        private IPAddress[] _gossipSeeds;
+        private IPAddress[] _ipAddresses;
         private int _networkIpPort;
         private UserCredentials _userCredentials;
         
@@ -90,11 +90,24 @@ namespace ReactiveDomain.EventStore {
         /// Sets the cluster DNS name.
         /// </summary>
         /// <param name="clusterDns">The DNS name under which cluster nodes are listed.</param>
-        /// <returns>A <see cref="DnsClusterSettingsBuilder"/> for further configuration.</returns>
+        /// <returns>A <see cref="StreamStoreConnectionSettingsBuilder"/> for further configuration.</returns>
         /// <exception cref="ArgumentNullException">If <paramref name="clusterDns" /> is null or empty.</exception>
         public StreamStoreConnectionSettingsBuilder SetClusterDns(string clusterDns) {
             Ensure.NotNullOrEmpty(clusterDns, "clusterDns");
             _clusterDns = clusterDns;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets gossip seed IP Addresses for the client.
+        /// </summary>
+        /// <param name="ipAddresses">IpAddress array: The IP addresses that will build the cluster <see cref="GossipSeed"/>s.</param>
+        /// <returns>A <see cref="StreamStoreConnectionSettingsBuilder"/> for further configuration.</returns>
+        /// <exception cref="ArgumentNullException">If <paramref name="ipAddresses" /> is null or empty.</exception>
+        public StreamStoreConnectionSettingsBuilder SetGossipSeedEndPoints(IPAddress[] ipAddresses) {
+            Ensure.NotNullOrEmpty(ipAddresses, "ipAddresses");
+            _ipAddresses = new IPAddress[ipAddresses.Length];
+            Array.Copy(ipAddresses, _ipAddresses, ipAddresses.Length);
             return this;
         }
 
@@ -158,7 +171,7 @@ namespace ReactiveDomain.EventStore {
                 _userCredentials,
                 _singleServerIpAddress,
                 _clusterDns,
-                _gossipSeeds,
+                _ipAddresses,
                 _networkIpPort,
                 _log,
                 _verboseLogging);

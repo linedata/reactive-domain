@@ -107,6 +107,7 @@ namespace ReactiveDomain.EventStore
             } else if (ipAddresses != null && ipAddresses.Count > 0) {
                 _connectionType = ConnectionType.GossipSeedsCluster;
 
+                GossipSeeds = new GossipSeed[ipAddresses.Count];
                 for (var i = 0; i < ipAddresses.Count; i++)
                 {
                     var ipendpoint = new IPEndPoint(ipAddresses[i], networkIpPort);

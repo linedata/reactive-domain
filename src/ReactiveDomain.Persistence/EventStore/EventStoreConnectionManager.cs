@@ -257,9 +257,7 @@ namespace ReactiveDomain.EventStore {
 
             if (verboseLogging) {
                 return ConnectionSettings.Create()
-                    .SetDefaultUserCredentials(
-                        new global::EventStore.ClientAPI.SystemData.UserCredentials(credentials.Username,
-                            credentials.Password))
+                    .SetDefaultUserCredentials(credentials.ToESCredentials())
                     .KeepReconnecting()
                     .KeepRetrying()
                     .UseConsoleLogger()
@@ -267,9 +265,7 @@ namespace ReactiveDomain.EventStore {
                     .Build();
             } else {
                 return ConnectionSettings.Create()
-                    .SetDefaultUserCredentials(
-                        new global::EventStore.ClientAPI.SystemData.UserCredentials(credentials.Username,
-                            credentials.Password))
+                    .SetDefaultUserCredentials(credentials.ToESCredentials())
                     .KeepReconnecting()
                     .KeepRetrying()
                     .UseConsoleLogger()
