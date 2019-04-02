@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using EventStore.ClientAPI;
 using EventStore.ClientAPI.Exceptions;
@@ -15,19 +13,8 @@ using ILogger = ReactiveDomain.Logging.ILogger;
 namespace ReactiveDomain.EventStore {
     public class EventStoreConnectionManager {
 
-        /// <summary>
-        /// Options when there is a process conflict when the EventStore process starts
-        /// </summary>
-        public enum StartConflictOption {
-            Kill,
-            Connect,
-            Error
-        }
-
-        private readonly ILogger _log = LogManager.GetLogger("Common");
+        private readonly ILogger _log = LogManager.GetLogger(nameof(EventStoreConnectionManager));
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.None };
-        private Process _process;
-        private bool _disposed;
 
         public IStreamStoreConnection Connection { get; private set; }
 
@@ -85,7 +72,6 @@ namespace ReactiveDomain.EventStore {
             );
             if (Connection != null) return;
             _log.Error("Connection to EventStore is null,  - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore();
         }
 
         /// <summary>
@@ -117,7 +103,6 @@ namespace ReactiveDomain.EventStore {
 
             if (Connection != null) return;
             _log.Error("EventStore Connection is null - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore();
         }
 
         /// <summary>
@@ -146,80 +131,6 @@ namespace ReactiveDomain.EventStore {
 
             if (Connection != null) return;
             _log.Error($"EventStore Custer of {gossipSeeds.Length} Connection is null - Diagnostic Monitoring will be unavailable.");
-            TeardownEventStore();
-        }
-
-        /// <summary>
-        /// Start the EventStore executable with the common default settings
-        /// </summary>
-        /// <param name="installPath">EventStore executable path</param>
-        /// <param name="additionalArgs">Supplemental EventStore CLI arguments</param>
-        public void SetupEventStore(DirectoryInfo installPath, string additionalArgs = null) {
-            var args = $" --config=\"./config.yaml\" {additionalArgs ?? ""}";
-
-            SetupEventStore(installPath,
-                args,
-                new UserCredentials("admin", "changeit"),
-                IPAddress.Parse("127.0.0.1"),
-                tcpPort: 1113,
-                windowStyle: ProcessWindowStyle.Hidden,
-                opt: StartConflictOption.Connect);
-        }
-
-        /// <summary>
-        /// Start the EventStore executable explicit single server options, and then connect
-        /// </summary>
-        /// <param name="installPath">DirectoryInfo: EventStore executable path</param>
-        /// <param name="args">string: EventStore CLI arguments</param>
-        /// <param name="credentials">UserCredentials: Username-Password pair for authentication and authorization.</param>
-        /// <param name="server">IPAddress: EventStore Server </param>
-        /// <param name="tcpPort">int: Network port used for Tcp communication.</param>
-        /// <param name="windowStyle">ProcessWindowStyle: How the EventStore executable window will be displayed or hidden.</param>
-        /// <param name="opt">StartConflictOption Enum: What to do if a conflicting EventStore process is already running.</param>
-        public void SetupEventStore(
-                                DirectoryInfo installPath,
-                                string args,
-                                UserCredentials credentials,
-                                IPAddress server,
-                                int tcpPort,
-                                ProcessWindowStyle windowStyle,
-                                StartConflictOption opt) {
-            Ensure.NotNullOrEmpty(args, "args");
-            Ensure.NotNull(credentials, "credentials");
-
-            var fullPath = Path.Combine(installPath.FullName, "EventStore.ClusterNode.exe");
-
-            var runningEventStores = Process.GetProcessesByName("EventStore.ClusterNode");
-            if (runningEventStores.Count() != 0) {
-                switch (opt) {
-                    case StartConflictOption.Connect:
-                        _process = runningEventStores[0];
-                        break;
-                    case StartConflictOption.Kill:
-                        foreach (var es in runningEventStores) {
-                            es.Kill();
-                        }
-                        break;
-                    case StartConflictOption.Error:
-                        throw new Exception("Conflicting EventStore running.");
-                }
-            }
-
-            if (_process == null) {
-                _process = new Process {
-                    StartInfo = {
-                        WindowStyle = windowStyle,
-                        UseShellExecute = true,
-                        CreateNoWindow = false,
-                        WorkingDirectory = installPath.FullName,
-                        FileName = fullPath,
-                        Arguments = args,
-                        Verb ="runas"
-                    }
-                };
-                _process.Start();
-            }
-            Connect(credentials, server, tcpPort);
         }
 
         /// <summary>
@@ -231,8 +142,7 @@ namespace ReactiveDomain.EventStore {
             const int retry = 8;
             var count = 0;
             do {
-                try
-                {
+                try {
                     Connection.ReadStreamForward("by_event_type", 0, 1);
                     return;
                 }
@@ -260,34 +170,8 @@ namespace ReactiveDomain.EventStore {
                 .KeepReconnecting()
                 .KeepRetrying()
                 .UseConsoleLogger()
-                .IfVerboseLogging(() => verboseLogging, (x) => x.EnableVerboseLogging())
+                .If(() => verboseLogging, (x) => x.EnableVerboseLogging())
                 .Build();
-        }
-
-        /// <summary>
-        ///  Terminate an EventStore instance created by StartEventStore
-        /// </summary>
-        /// <remarks>
-        /// Yin for the <see cref="StartEventStore"/> yang.
-        /// </remarks>
-        /// <param name="leaveRunning">bool: true = close the connection, but leave the process running.</param>
-        public void TeardownEventStore(bool leaveRunning = true) {
-            Connection?.Close();
-            if (leaveRunning || _process == null || _process.HasExited) return;
-            _process.Kill();
-            _process.WaitForExit();
-        }
-
-        /// <summary>
-        /// Ensure the TeardownEventStore method is called
-        /// </summary>
-        /// <remarks>
-        ///  <seealso cref="TeardownEventStore"/> is called with the leaveRunnig parameter = false
-        /// </remarks>
-        public void Dispose() {
-            if (_disposed) return;
-            TeardownEventStore();
-            _disposed = true;
         }
     }
 }

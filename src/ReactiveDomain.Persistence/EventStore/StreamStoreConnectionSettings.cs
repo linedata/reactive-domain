@@ -69,9 +69,10 @@ namespace ReactiveDomain.EventStore
         /// <summary>
         /// Convenience connection type variables
         /// </summary>
-        private ConnectionType _connectionType = 0;
+        private ConnectionType _connectionType = ConnectionType.NoConnection;
 
         private enum ConnectionType {
+            NoConnection,
             SingleNode,
             DnsCluster,
             GossipSeedsCluster
