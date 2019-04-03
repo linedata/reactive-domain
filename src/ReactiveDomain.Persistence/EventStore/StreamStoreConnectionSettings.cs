@@ -26,8 +26,7 @@ namespace ReactiveDomain.EventStore
         /// A <see cref="ConnectionSettingsBuilder"/> you can use to build up a <see cref="ConnectionSettings"/> via
         /// the Fluent design pattern.
         /// </returns>.
-        public static StreamStoreConnectionSettingsBuilder Create()
-        {
+        public static StreamStoreConnectionSettingsBuilder Create() {
             return new StreamStoreConnectionSettingsBuilder();
         }
 
@@ -109,8 +108,7 @@ namespace ReactiveDomain.EventStore
                 _connectionType = ConnectionType.GossipSeedsCluster;
 
                 GossipSeeds = new GossipSeed[ipAddresses.Count];
-                for (var i = 0; i < ipAddresses.Count; i++)
-                {
+                for (var i = 0; i < ipAddresses.Count; i++) {
                     var ipendpoint = new IPEndPoint(ipAddresses[i], networkIpPort);
                     GossipSeeds[i] = new GossipSeed(ipendpoint, ipAddresses[i].ToString());
                 }

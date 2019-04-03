@@ -35,7 +35,7 @@ namespace ReactiveDomain.EventStore {
         }
 
         /// <summary>
-        /// Configures the connection to output log messages to the <see cref="Logging.ConsoleLogger" />.
+        /// Configures the connection to output log messages to the <see cref="ConsoleLogger" />.
         /// </summary>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder UseConsoleLogger() {
@@ -55,6 +55,7 @@ namespace ReactiveDomain.EventStore {
         /// <param name="userCredentials"></param>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder SetUserCredentials(UserCredentials userCredentials) {
+            Ensure.NotNull(userCredentials, nameof(userCredentials));
             _userCredentials = userCredentials;
             return this;
         }
@@ -152,14 +153,6 @@ namespace ReactiveDomain.EventStore {
         /// <returns>An immutable <see cref="ConnectionSettings"/> object with the values specified by the builder.</returns>
         public static implicit operator StreamStoreConnectionSettings(StreamStoreConnectionSettingsBuilder builder) {
             return builder.Build();
-        }
-
-        /// <summary>
-        /// Sets the client to discover nodes using a DNS name and a well-known port.
-        /// </summary>
-        /// <returns>A <see cref="DnsClusterSettingsBuilder"/> for further configuration.</returns>
-        public DnsClusterSettingsBuilder DiscoverClusterViaDns() {
-            return new DnsClusterSettingsBuilder();
         }
 
         /// <summary>
