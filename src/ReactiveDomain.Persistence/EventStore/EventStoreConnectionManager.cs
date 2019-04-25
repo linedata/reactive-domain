@@ -39,7 +39,7 @@ namespace ReactiveDomain.EventStore {
         public EventStoreConnectionManager(StreamStoreConnectionSettings connectionSettings)
         {
             if (connectionSettings.IsSingleConnection) {
-                Connect(connectionSettings.UserCredentials, connectionSettings.SingleServerIpAddress, connectionSettings.NetworkIpPort, connectionSettings.VerboseLogging);
+                Connect(connectionSettings.UserCredentials, connectionSettings.SingleServerIpEndPoint, connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsDnsClusterConnection) {
                 Connect(connectionSettings.UserCredentials, connectionSettings.ClusterDns, connectionSettings.NetworkIpPort, connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsGossipSeedClusterConnection) {
@@ -57,18 +57,16 @@ namespace ReactiveDomain.EventStore {
         /// Connect to a single EventStore server with an IP address and a port
         /// </summary>
         /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
-        /// <param name="serverIpAddress"><see cref="IPAddress"/>: IP address and port of the EventStore server</param>
-        /// <param name="tcpPort">int: IP address and port of the EventStore server</param>
+        /// <param name="serverIpEndPoint"><see cref="IPEndPoint"/>: IP address and port of the EventStore server</param>
         /// <param name="verboseLogging">bool: Setup an EventStore connection with verbose logging turned on. Default = false.</param>
         private void Connect(
             UserCredentials credentials,
-            IPAddress serverIpAddress,
-            int tcpPort,
+            IPEndPoint serverIpEndPoint,
             bool verboseLogging = false) {
 
             var settings = SetClientConnectionSettings(credentials, verboseLogging);
             Connection = new EventStoreConnectionWrapper(
-                             EventStoreConnection.Create(settings, new IPEndPoint(serverIpAddress, tcpPort), $"{serverIpAddress}-Single Connection")
+                             EventStoreConnection.Create(settings, serverIpEndPoint, $"{serverIpEndPoint}-Single Connection")
             );
             if (Connection != null) return;
             _log.Error("Connection to EventStore is null,  - Diagnostic Monitoring will be unavailable.");

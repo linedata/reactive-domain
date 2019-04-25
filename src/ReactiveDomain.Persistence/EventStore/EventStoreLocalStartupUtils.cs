@@ -101,8 +101,7 @@ namespace ReactiveDomain.EventStore {
 
             var sscSettings = StreamStoreConnectionSettings.Create()
                 .SetUserCredentials(credentials)
-                .SetSingleServerIpAddress(server)
-                .SetSingleServerTcpPort(tcpPort)
+                .SetSingleServerIpEndPoint(new IPEndPoint(server, tcpPort))
                 .SetVerboseLogging(false);
             var eventStoreConnectionManager = new EventStoreConnectionManager(sscSettings);
             Connection = eventStoreConnectionManager.Connection;

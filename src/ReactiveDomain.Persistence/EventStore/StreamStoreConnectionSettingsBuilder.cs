@@ -14,12 +14,17 @@ namespace ReactiveDomain.EventStore {
 
         private ILogger _log = new Logging.NullLogger();
         private bool _verboseLogging;
-        private IPAddress _singleServerIpAddress;
+        private IPEndPoint _singleServerIpEndPoint;
         private string _clusterDns;
-        private IPAddress[] _ipAddresses;
+        private IPEndPoint[] _ipEndPoints;
         private int _networkIpPort;
+
         private UserCredentials _userCredentials;
-        
+        private bool _useTlsConnection;
+        private string _targetHost;
+        private bool _validateServer;
+
+
         internal StreamStoreConnectionSettingsBuilder() { }
 
         /// <summary>
@@ -61,14 +66,14 @@ namespace ReactiveDomain.EventStore {
         }
 
         /// <summary>
-        /// Sets the single data store instance <see cref="IPAddress"/> using an IP address x.x.x.x.
+        /// Sets the single data store instance <see cref="IPEndPoint"/> using an IP address x.x.x.x and tcp port.
         /// </summary>
-        /// <param name="ipAddress">IPAddress: The IP address of the data store server.</param>
+        /// <param name="ipEndPoint">IPEndPoint: The IP address and port used for the data store server.</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">If <paramref name="ipAddress" /> is null or empty.</exception>
-        public StreamStoreConnectionSettingsBuilder SetSingleServerIpAddress(IPAddress ipAddress) {
-            Ensure.NotNull(ipAddress, nameof(ipAddress));
-            _singleServerIpAddress = ipAddress;
+        /// <exception cref="ArgumentNullException">If <paramref name="ipEndPoint" /> is null or empty.</exception>
+        public StreamStoreConnectionSettingsBuilder SetSingleServerIpEndPoint(IPEndPoint ipEndPoint) {
+            Ensure.NotNull(ipEndPoint, nameof(ipEndPoint));
+            _singleServerIpEndPoint = ipEndPoint;
             return this;
         }
 
@@ -102,13 +107,13 @@ namespace ReactiveDomain.EventStore {
         /// <summary>
         /// Sets gossip seed IP Addresses for the client.
         /// </summary>
-        /// <param name="ipAddresses">IpAddress array: The IP addresses that will build the cluster <see cref="GossipSeed"/>s.</param>
+        /// <param name="ipEndPoints">IpEndPoint array: The IP addresses that will build the cluster <see cref="GossipSeed"/>s.</param>
         /// <returns>A <see cref="StreamStoreConnectionSettingsBuilder"/> for further configuration.</returns>
-        /// <exception cref="ArgumentNullException">If <paramref name="ipAddresses" /> is null or empty.</exception>
-        public StreamStoreConnectionSettingsBuilder SetGossipSeedEndPoints(IPAddress[] ipAddresses) {
-            Ensure.NotNullOrEmpty(ipAddresses, "ipAddresses");
-            _ipAddresses = new IPAddress[ipAddresses.Length];
-            Array.Copy(ipAddresses, _ipAddresses, ipAddresses.Length);
+        /// <exception cref="ArgumentNullException">If <paramref name="ipEndPoints" /> is null or empty.</exception>
+        public StreamStoreConnectionSettingsBuilder SetGossipSeedEndPoints(IPEndPoint[] ipEndPoints) {
+            Ensure.NotNullOrEmpty(ipEndPoints, nameof(ipEndPoints));
+            _ipEndPoints = new IPEndPoint[ipEndPoints.Length];
+            Array.Copy(ipEndPoints, _ipEndPoints, ipEndPoints.Length);
             return this;
         }
 
@@ -127,7 +132,7 @@ namespace ReactiveDomain.EventStore {
         /// <param name="clusterGossipPort">The cluster gossip port.</param>
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder SetClusterGossipPort(int clusterGossipPort) {
-            Ensure.Between(1024, 65535, clusterGossipPort, "clusterGossipPort");
+            Ensure.Between(1024, 65535, clusterGossipPort, nameof(clusterGossipPort));
             _networkIpPort = clusterGossipPort;
             return this;
         }
@@ -142,6 +147,23 @@ namespace ReactiveDomain.EventStore {
         /// <returns></returns>
         public StreamStoreConnectionSettingsBuilder SetVerboseLogging(bool verbose) {
             _verboseLogging = verbose;
+            return this;
+        }
+
+        /// <summary>
+        /// Uses a TLS connection over TCP. This should generally be used with authentication.
+        /// </summary>
+        /// <remarks>
+        /// Exposing the underlying EventStore setting to use a TLS connection. Taken from <see cref="ConnectionSettingsBuilder"/>.
+        /// </remarks>
+        /// <param name="targetHost">HostName of server certificate.</param>
+        /// <param name="validateServer">Whether to accept connection from server with not trusted certificate.</param>
+        /// <returns></returns>
+        public StreamStoreConnectionSettingsBuilder UseSslConnection(string targetHost, bool validateServer) {
+            Ensure.NotNullOrEmpty(targetHost, "targetHost");
+            _useTlsConnection = true;
+            _targetHost = targetHost;
+            _validateServer = validateServer;
             return this;
         }
 
@@ -162,11 +184,14 @@ namespace ReactiveDomain.EventStore {
         public StreamStoreConnectionSettings Build() {
             return new StreamStoreConnectionSettings(
                 _userCredentials,
-                _singleServerIpAddress,
+                _singleServerIpEndPoint,
                 _clusterDns,
-                _ipAddresses,
+                _ipEndPoints,
                 _networkIpPort,
                 _log,
+                _useTlsConnection,
+                _targetHost,
+                _validateServer,
                 _verboseLogging);
         }
     }

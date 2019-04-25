@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using EventStore.ClientAPI;
 using ReactiveDomain.Util;
@@ -36,6 +37,21 @@ namespace ReactiveDomain.EventStore
         public readonly UserCredentials UserCredentials;
 
         /// <summary>
+        /// Whether the connection is encrypted using TLS.
+        /// </summary>
+        public readonly bool UseTlsConnection;
+
+        /// <summary>
+        /// The host name of the server expected on the SSL certificate.
+        /// </summary>
+        public readonly string TargetHost;
+
+        /// <summary>
+        /// Whether to validate the server SSL certificate.
+        /// </summary>
+        public readonly bool ValidateServer;
+
+        /// <summary>
         /// The DNS name to use for discovering endpoints.
         /// </summary>
         public readonly string ClusterDns;
@@ -53,7 +69,7 @@ namespace ReactiveDomain.EventStore
         /// <summary>
         /// The IPAddress of a single data store instance.
         /// </summary>
-        public readonly IPAddress SingleServerIpAddress;
+        public readonly IPEndPoint SingleServerIpEndPoint;
 
         /// <summary>
         /// Apply the verbose internal logging from <see cref="EventStoreConnection"/> internal logic. Default: False.
@@ -83,42 +99,51 @@ namespace ReactiveDomain.EventStore
 
         internal StreamStoreConnectionSettings(
             UserCredentials userCredentials,
-            IPAddress singleServerIpAddress,
+            IPEndPoint singleServerIpEndPoint,
             string clusterDns,
-            IReadOnlyList<IPAddress> ipAddresses,
+            IReadOnlyList<IPEndPoint> ipEndPoints,
             int networkIpPort,
             Logging.ILogger log,
+            bool useTlsConnection,
+            string targetHost,
+            bool validateServer,
             bool verboseLogging = false)
         {
             Ensure.NotNull(log, nameof(log));
             Ensure.NotNull(userCredentials, nameof(userCredentials));
-            Ensure.Between(1024, 65535, networkIpPort, nameof(networkIpPort));
+            if (useTlsConnection)
+            {
+                Ensure.NotNullOrEmpty(targetHost, nameof(targetHost));
+            }
 
-            if (singleServerIpAddress != null && !string.IsNullOrWhiteSpace(clusterDns) ||
-                singleServerIpAddress != null && ipAddresses != null && ipAddresses.Count > 0 ||
-                !string.IsNullOrWhiteSpace(clusterDns) && ipAddresses != null && ipAddresses.Count > 0) {
+            if (singleServerIpEndPoint != null && !string.IsNullOrWhiteSpace(clusterDns) ||
+                singleServerIpEndPoint != null && ipEndPoints != null && ipEndPoints.Count > 0 ||
+                !string.IsNullOrWhiteSpace(clusterDns) && ipEndPoints != null && ipEndPoints.Count > 0) {
                     throw new StreamStoreConnectionException("Conflicting server or cluster input passed.");
             }
 
-            if (singleServerIpAddress != null) {
+            if (singleServerIpEndPoint != null) {
+                Ensure.Between(1024, 65535, singleServerIpEndPoint.Port, nameof(singleServerIpEndPoint.Port));
                 _connectionType = ConnectionType.SingleNode;
             } else if (!string.IsNullOrWhiteSpace(clusterDns)) {
+                Ensure.Between(1024, 65535, networkIpPort, nameof(networkIpPort));
                 _connectionType = ConnectionType.DnsCluster;
-            } else if (ipAddresses != null && ipAddresses.Count > 0) {
-                _connectionType = ConnectionType.GossipSeedsCluster;
-
-                GossipSeeds = new GossipSeed[ipAddresses.Count];
-                for (var i = 0; i < ipAddresses.Count; i++) {
-                    var ipendpoint = new IPEndPoint(ipAddresses[i], networkIpPort);
-                    GossipSeeds[i] = new GossipSeed(ipendpoint, ipAddresses[i].ToString());
+            } else if (ipEndPoints != null && ipEndPoints.Count > 0) {
+                foreach (var endPoint in ipEndPoints) {
+                    Ensure.Between(1024, 65535, endPoint.Port, nameof(endPoint.Port));
                 }
+                _connectionType = ConnectionType.GossipSeedsCluster;
+                GossipSeeds = ipEndPoints.Select(x => new GossipSeed(x)).ToArray();
             }
 
             UserCredentials = userCredentials;
-            SingleServerIpAddress = singleServerIpAddress;
+            SingleServerIpEndPoint = singleServerIpEndPoint;
             ClusterDns = clusterDns;
             NetworkIpPort = networkIpPort;
             Log = log;
+            UseTlsConnection = useTlsConnection;
+            ValidateServer = validateServer;
+            TargetHost = targetHost;
             VerboseLogging = verboseLogging;
         }
     }
