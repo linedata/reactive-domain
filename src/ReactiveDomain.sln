@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI", "Reacti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReactiveDomain.UI.Testing", "ReactiveDomain.UI.Testing\ReactiveDomain.UI.Testing.csproj", "{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveDomain.Persistence.Samples", "ReactiveDomain.Persistence.Samples\ReactiveDomain.Persistence.Samples.csproj", "{0164C794-DCD6-4BA2-A781-30DAACC0A7FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3226FEB-EDD7-4EB0-83E3-E1EA9AC058F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0164C794-DCD6-4BA2-A781-30DAACC0A7FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0164C794-DCD6-4BA2-A781-30DAACC0A7FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0164C794-DCD6-4BA2-A781-30DAACC0A7FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0164C794-DCD6-4BA2-A781-30DAACC0A7FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

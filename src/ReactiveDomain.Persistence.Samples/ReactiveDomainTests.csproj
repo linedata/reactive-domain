@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>ES-ConnectionTest</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ProgramES.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Program - Copy.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="EventStore.ClientAPI">
+      <HintPath>..\..\..\EventStore\bin\Debug\EventStore.ClientAPI\netstandard2.0\EventStore.ClientAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="ReactiveDomain.Core">
+      <HintPath>..\..\..\reactive-domain\bld\Debug\net472\ReactiveDomain.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ReactiveDomain.Foundation">
+      <HintPath>..\..\..\reactive-domain\bld\Debug\net472\ReactiveDomain.Foundation.dll</HintPath>
+    </Reference>
+    <Reference Include="ReactiveDomain.Messaging">
+      <HintPath>..\..\..\reactive-domain\bld\Debug\net472\ReactiveDomain.Messaging.dll</HintPath>
+    </Reference>
+    <Reference Include="ReactiveDomain.Persistence">
+      <HintPath>..\..\..\reactive-domain\bld\Debug\net472\ReactiveDomain.Persistence.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
