@@ -39,15 +39,30 @@ namespace ReactiveDomain.EventStore {
         public EventStoreConnectionManager(StreamStoreConnectionSettings connectionSettings)
         {
             if (connectionSettings.IsSingleConnection) {
-                Connect(connectionSettings.UserCredentials, connectionSettings.SingleServerIpEndPoint, connectionSettings.VerboseLogging);
+                Connect(connectionSettings.UserCredentials, 
+                    connectionSettings.SingleServerIpEndPoint, 
+                    connectionSettings.UseTlsConnection, 
+                    connectionSettings.TargetHost, 
+                    connectionSettings.ValidateServer, 
+                    connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsDnsClusterConnection) {
-                Connect(connectionSettings.UserCredentials, connectionSettings.ClusterDns, connectionSettings.NetworkIpPort, connectionSettings.VerboseLogging);
+                Connect(connectionSettings.UserCredentials,
+                    connectionSettings.ClusterDns,
+                    connectionSettings.NetworkIpPort,
+                    connectionSettings.UseTlsConnection,
+                    connectionSettings.TargetHost,
+                    connectionSettings.ValidateServer,
+                    connectionSettings.VerboseLogging);
             } else if (connectionSettings.IsGossipSeedClusterConnection) {
-                Connect(connectionSettings.UserCredentials, connectionSettings.GossipSeeds, connectionSettings.VerboseLogging);
-            }
-            else {
+                Connect(connectionSettings.UserCredentials, 
+                    connectionSettings.GossipSeeds,
+                    connectionSettings.UseTlsConnection,
+                    connectionSettings.TargetHost,
+                    connectionSettings.ValidateServer,
+                    connectionSettings.VerboseLogging);
+            } else {
                 throw new EventStoreConnectionException(
-                    "EventStoreConnectionManager invalid settings. Define SingleServerIpAddress, ClusterDns, or GossipSeeds.");
+                    "EventStoreConnectionManager invalid settings. Minimum values: UserCredentials, SingleServerIpAddress, ClusterDns, or GossipSeeds required.");
             }
 
             StartEventStore();
@@ -58,13 +73,25 @@ namespace ReactiveDomain.EventStore {
         /// </summary>
         /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
         /// <param name="serverIpEndPoint"><see cref="IPEndPoint"/>: IP address and port of the EventStore server</param>
-        /// <param name="verboseLogging">bool: Setup an EventStore connection with verbose logging turned on. Default = false.</param>
+        /// <param name="useTlsConnection">bool: Use an encrypted TLS connection to EventStore server. (optional, defaults to false.)</param>
+        /// <param name="tlsCertificateHostName">string: The host name of the server expected on the TLS certificate. (optional unless <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="validateTlsCertificate">bool: Validate the server TLS certificate. (optional, defaults to false. Used if <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="verboseLogging">bool: Verbose Logging True/False (optional, defaults to false)</param>
         private void Connect(
             UserCredentials credentials,
             IPEndPoint serverIpEndPoint,
+            bool useTlsConnection = false,
+            string tlsCertificateHostName = "",
+            bool validateTlsCertificate = false,
             bool verboseLogging = false) {
 
-            var settings = SetClientConnectionSettings(credentials, verboseLogging);
+            var settings = SetClientConnectionSettings(
+                    credentials,
+                    useTlsConnection,
+                    tlsCertificateHostName,
+                    validateTlsCertificate,
+                    verboseLogging);
+
             Connection = new EventStoreConnectionWrapper(
                              EventStoreConnection.Create(settings, serverIpEndPoint, $"{serverIpEndPoint}-Single Connection")
             );
@@ -82,14 +109,26 @@ namespace ReactiveDomain.EventStore {
         /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
         /// <param name="clusterDns">string: Cluster DNS name representing all nodes in the EventStore cluster</param>
         /// <param name="networkPort">int: External HTTP port used for cluster gossip communication.</param>
-        /// <param name="verboseLogging">bool: Setup an EventStore connection with verbose logging turned on. Default = false.</param>
+        /// <param name="useTlsConnection">bool: Use an encrypted TLS connection to EventStore server. (optional, defaults to false.)</param>
+        /// <param name="tlsCertificateHostName">string: The host name of the server expected on the TLS certificate. (optional unless <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="validateTlsCertificate">bool: Validate the server TLS certificate. (optional, defaults to false. Used if <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="verboseLogging">bool: Verbose Logging True/False (optional, defaults to false)</param>
         private void Connect(
             UserCredentials credentials,
             string clusterDns,
             int networkPort,
+            bool useTlsConnection = false,
+            string tlsCertificateHostName = "",
+            bool validateTlsCertificate = false,
             bool verboseLogging = false) {
 
-            var settings = SetClientConnectionSettings(credentials, verboseLogging);
+            var settings = SetClientConnectionSettings(
+                    credentials,
+                    useTlsConnection,
+                    tlsCertificateHostName,
+                    validateTlsCertificate,
+                    verboseLogging);
+
             var esConn = EventStoreConnection.Create(settings,
                     ClusterSettings.Create()
                         .DiscoverClusterViaDns()
@@ -113,13 +152,25 @@ namespace ReactiveDomain.EventStore {
         /// </remarks>
         /// <param name="credentials">UserCredentials: Username-Password used for authentication and authorization</param>
         /// <param name="gossipSeeds">Array of GossipSeeds: The TCP/IP addresses, port and header. Generated by the <see cref="StreamStoreConnectionSettings"/>.</param>
-        /// <param name="verboseLogging">bool: Setup an EventStore connection with verbose logging turned on. Default = false.</param>
+        /// <param name="useTlsConnection">bool: Use an encrypted TLS connection to EventStore server. (optional, defaults to false.)</param>
+        /// <param name="tlsCertificateHostName">string: The host name of the server expected on the TLS certificate. (optional unless <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="validateTlsCertificate">bool: Validate the server TLS certificate. (optional, defaults to false. Used if <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="verboseLogging">bool: Verbose Logging True/False (optional, defaults to false)</param>
         private void Connect(
             UserCredentials credentials,
             GossipSeed[] gossipSeeds,
+            bool useTlsConnection = false,
+            string tlsCertificateHostName = "",
+            bool validateTlsCertificate = false,
             bool verboseLogging = false) {
 
-            var settings = SetClientConnectionSettings(credentials, verboseLogging);
+            var settings = SetClientConnectionSettings(
+                credentials,
+                useTlsConnection,
+                tlsCertificateHostName,
+                validateTlsCertificate,
+                verboseLogging);
+
             Connection = new EventStoreConnectionWrapper(
                 EventStoreConnection.Create(settings,
                     ClusterSettings.Create()
@@ -155,10 +206,16 @@ namespace ReactiveDomain.EventStore {
         /// <summary>
         /// Create EventStore ConnectionSettings
         /// </summary>
-        /// <param name="credentials">ReactiveDomain Credentials</param>
-        /// <param name="verboseLogging">True/False for </param>
+        /// <param name="credentials">Reactive Domain Credentials. (required)</param>
+        /// <param name="useTlsConnection">bool: Use an encrypted TLS connection to EventStore server. (optional, defaults to false.)</param>
+        /// <param name="tlsCertificateHostName">string: The host name of the server expected on the TLS certificate. (optional unless <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="validateTlsCertificate">bool: Validate the server TLS certificate. (optional, defaults to false. Used if <see cref="useTlsConnection"/> is true.)</param>
+        /// <param name="verboseLogging">bool: Verbose Logging True/False (optional, defaults to false)</param>
         /// <returns>EventStore.ClientAPI.ConnectionSettings</returns>
         private static ConnectionSettings SetClientConnectionSettings(UserCredentials credentials,
+            bool useTlsConnection = false,
+            string tlsCertificateHostName = "",
+            bool validateTlsCertificate = false,
             bool verboseLogging = false)
         {
             Ensure.NotNull(credentials, "credentials");
@@ -168,6 +225,7 @@ namespace ReactiveDomain.EventStore {
                 .KeepReconnecting()
                 .KeepRetrying()
                 .UseConsoleLogger()
+                .If(() => useTlsConnection, (x) => x.UseSslConnection(tlsCertificateHostName, validateTlsCertificate))
                 .If(() => verboseLogging, (x) => x.EnableVerboseLogging())
                 .Build();
         }

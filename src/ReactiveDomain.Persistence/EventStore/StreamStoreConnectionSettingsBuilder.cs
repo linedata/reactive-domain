@@ -155,13 +155,19 @@ namespace ReactiveDomain.EventStore {
         /// </summary>
         /// <remarks>
         /// Exposing the underlying EventStore setting to use a TLS connection. Taken from <see cref="ConnectionSettingsBuilder"/>.
+        /// If this method is not used, then TLS is not used. <see cref="useTls"/> provided to allow TLS to be optional without changing code.
         /// </remarks>
-        /// <param name="targetHost">HostName of server certificate.</param>
-        /// <param name="validateServer">Whether to accept connection from server with not trusted certificate.</param>
+        /// <param name="useTls">bool: Use a secure encrypted TLS connection to EventStore.</param>
+        /// <param name="targetHost">string: HostName of server certificate. Optional, unless <see cref="useTls"/> is true.</param>
+        /// <param name="validateServer">bool: Accept connection from server with untrusted certificate (optional, defaults to false).</param>
         /// <returns></returns>
-        public StreamStoreConnectionSettingsBuilder UseSslConnection(string targetHost, bool validateServer) {
-            Ensure.NotNullOrEmpty(targetHost, "targetHost");
-            _useTlsConnection = true;
+        public StreamStoreConnectionSettingsBuilder SetTlsConnection(bool useTls,
+            string targetHost = "", 
+            bool validateServer = false) {
+
+            if (useTls)
+                Ensure.NotNullOrEmpty(targetHost, "targetHost");
+            _useTlsConnection = useTls;
             _targetHost = targetHost;
             _validateServer = validateServer;
             return this;

@@ -42,12 +42,12 @@ namespace ReactiveDomain.EventStore
         public readonly bool UseTlsConnection;
 
         /// <summary>
-        /// The host name of the server expected on the SSL certificate.
+        /// The host name of the server expected on the TLS certificate.
         /// </summary>
         public readonly string TargetHost;
 
         /// <summary>
-        /// Whether to validate the server SSL certificate.
+        /// Whether to validate the server TLS certificate.
         /// </summary>
         public readonly bool ValidateServer;
 
