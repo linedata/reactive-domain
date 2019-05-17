@@ -16,7 +16,7 @@ namespace ReactiveDomain.Persistence.Samples
 
             for (var x = 0; x < 2; x++)
             {
-                var data = new EventStore.ClientAPI.EventData(
+                var data = new global::EventStore.ClientAPI.EventData(
                     Guid.NewGuid(),
                     "event-type",
                     true,
