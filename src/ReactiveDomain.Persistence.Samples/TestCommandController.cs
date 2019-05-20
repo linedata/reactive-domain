@@ -99,7 +99,7 @@ namespace ReactiveDomain.Persistence.Samples {
 			            break;
 			        case "gossip2":
 			            settings = ConnectionSettings.Create()
-			                .SetDefaultUserCredentials(new EventStore.ClientAPI.SystemData.UserCredentials(_userSelections.Username, _userSelections.Password))
+			                .SetDefaultUserCredentials(new global::EventStore.ClientAPI.SystemData.UserCredentials(_userSelections.Username, _userSelections.Password))
 			                .KeepReconnecting()
 			                .KeepRetrying()
 			                .UseConsoleLogger()
@@ -114,7 +114,7 @@ namespace ReactiveDomain.Persistence.Samples {
 					    break;
 					case "discover2":
 					    settings = ConnectionSettings.Create()
-					        .SetDefaultUserCredentials(new EventStore.ClientAPI.SystemData.UserCredentials(_userSelections.Username, _userSelections.Password))
+					        .SetDefaultUserCredentials(new global::EventStore.ClientAPI.SystemData.UserCredentials(_userSelections.Username, _userSelections.Password))
 					        .KeepReconnecting()
 					        .KeepRetrying()
 					        .UseConsoleLogger()
