@@ -3,7 +3,7 @@ using ReactiveDomain.Messaging;
 
 namespace ReactiveDomain.Testing
 {
-    public class WoftamEvent : IMessage
+    public class WoftamEvent : IEvent
     {
         public Guid MsgId { get; private set; }
         public string Property1 { get; private set; }

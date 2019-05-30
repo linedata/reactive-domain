@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace ReactiveDomain.Messaging {
     /// <summary>
-    /// The hierarchy of types inheriting from the Message Type.  
+    /// The hierarchy of types implementing the IMessage interface.  
     /// </summary>
     public static class MessageHierarchy {
         public static Type IMessageType = typeof(IMessage);
