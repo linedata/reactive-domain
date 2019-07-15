@@ -66,8 +66,12 @@ namespace ReactiveDomain.Foundation
             long? checkpoint = null,
             long? count = null,
             bool readBackwards = false)
-        {       
-           
+        {
+            if (!typeof(IMessage).IsAssignableFrom(tMessage))
+            {
+                throw new ArgumentException("type must implement IMessage", nameof(tMessage));
+            }
+
             return Read(
                 _streamNameBuilder.GenerateForEventType(tMessage.Name),
                checkpoint,
