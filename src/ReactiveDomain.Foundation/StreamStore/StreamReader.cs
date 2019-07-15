@@ -66,7 +66,8 @@ namespace ReactiveDomain.Foundation
             long? checkpoint = null,
             long? count = null,
             bool readBackwards = false)
-        {           
+        {       
+           
             return Read(
                 _streamNameBuilder.GenerateForEventType(tMessage.Name),
                checkpoint,
@@ -140,7 +141,9 @@ namespace ReactiveDomain.Foundation
                 Ensure.Nonnegative((long)checkpoint, nameof(checkpoint));
             if (count != null)
                 Ensure.Positive((long)count, nameof(count));
-            
+            if (!ValidateStreamName(streamName))
+                throw new ArgumentException("Stream not found.", streamName);
+
             _cancelled = false;
             firstEventRead = false;
             StreamName = streamName;
@@ -166,7 +169,11 @@ namespace ReactiveDomain.Foundation
             } while (!currentSlice.IsEndOfStream && !_cancelled && remaining != 0);
             return eventsRead;
         }
-       
+        public bool ValidateStreamName(string streamName)
+        {
+            var currentSlice = _streamStoreConnection.ReadStreamForward(streamName, 0, 1);
+            return !(currentSlice is StreamDeletedSlice);
+        }
         protected virtual void EventRead(RecordedEvent recordedEvent)
         {
             // do not publish or increase counters if cancelled
