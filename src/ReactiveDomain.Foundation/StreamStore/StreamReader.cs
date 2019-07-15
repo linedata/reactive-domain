@@ -61,6 +61,7 @@ namespace ReactiveDomain.Foundation
         /// <param name="count">The count of items to read</param>
         /// <param name="readBackwards">Read the stream backwards</param>
         /// <returns>Returns true if any events were read from the stream</returns>
+        /// <exception cref="ArgumentException"><paramref name="tMessage"/> must implement IMessage</exception>
         public bool Read(
             Type tMessage,
             long? checkpoint = null,
@@ -69,7 +70,7 @@ namespace ReactiveDomain.Foundation
         {
             if (!typeof(IMessage).IsAssignableFrom(tMessage))
             {
-                throw new ArgumentException("type must implement IMessage", nameof(tMessage));
+                throw new ArgumentException("tMessage must implement IMessage", nameof(tMessage));
             }
 
             return Read(
