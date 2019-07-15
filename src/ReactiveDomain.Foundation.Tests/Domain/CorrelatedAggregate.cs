@@ -5,7 +5,7 @@ using ReactiveDomain.Messaging;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain.Foundation.Tests
 {
-    public class CorrelatedAggregate : CorrelatedEDSM
+    public class CorrelatedAggregate : AggregateRoot
     {
         //reflection based constructor
         public CorrelatedAggregate()

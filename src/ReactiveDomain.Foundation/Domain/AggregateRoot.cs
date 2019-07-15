@@ -4,10 +4,10 @@ using ReactiveDomain.Messaging;
 // ReSharper disable once CheckNamespace
 namespace ReactiveDomain
 {
-    public class CorrelatedEDSM : EventDrivenStateMachine, ICorrelatedEventSource
+    public abstract class AggregateRoot : EventDrivenStateMachine, ICorrelatedEventSource
     {
-        public CorrelatedEDSM() { }
-        public CorrelatedEDSM(ICorrelatedMessage source = null)
+        public AggregateRoot() { }
+        public AggregateRoot(ICorrelatedMessage source = null)
         {
             if (source == null) { return; }
             _correlationId = source.CorrelationId;
